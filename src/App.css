@@ -1,0 +1,61 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: rgba(30, 30, 30, 0.92);
+  color: #eee;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+.collapsible-panel {
+  border: 1px solid #444;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.collapsible-panel__header {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: #2a2a2a;
+  user-select: none;
+}
+
+.collapsible-panel__body {
+  padding: 8px 12px;
+}
+
+.push-task-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+  border-bottom: 1px solid #333;
+}
+
+.push-task-row__progress {
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.push-task-row__progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.push-task-row__actions button {
+  margin-right: 6px;
+}
+
+.push-task-list__more {
+  width: 100%;
+  margin-top: 6px;
+}

@@ -1,0 +1,62 @@
+import { PushTask } from '../../store/schema';
+
+const HOUR_MS = 3_600_000;
+
+/**
+ * Thời điểm (epoch ms) của mốc nhắc push gần nhất chưa được push trong chu kỳ hiện tại.
+ * Trả về null nếu đã push hết các mốc của chu kỳ hiện tại (chờ sang chu kỳ mới).
+ */
+export function nextPushTime(task: PushTask): number | null {
+  const pending = task.offsetsHours
+    .map((offset, index) => ({ offset, index }))
+    .filter(({ index }) => !task.pushedOffsetIndexes.includes(index));
+  if (pending.length === 0) {
+    return null;
+  }
+  const soonest = pending.reduce((a, b) => (a.offset < b.offset ? a : b));
+  return task.cycleStart + soonest.offset * HOUR_MS;
+}
+
+/**
+ * Kiểm tra và xử lý các đầu việc đã tới hạn push tại thời điểm `now`.
+ * Trả về danh sách task đã cập nhật (đánh dấu offset đã push hoặc sang chu kỳ mới)
+ * cùng danh sách id các task vừa được push (để bắn notification).
+ */
+export function processDueTasks(tasks: PushTask[], now: number): { tasks: PushTask[]; pushedTaskIds: string[] } {
+  const pushedTaskIds: string[] = [];
+  const updated = tasks.map((task) => {
+    if (task.done) {
+      return task;
+    }
+    let current = task;
+    let due = nextPushTime(current);
+    while (due !== null && due <= now) {
+      const offsetIndex = current.offsetsHours.findIndex(
+        (offset, index) => current.cycleStart + offset * HOUR_MS === due && !current.pushedOffsetIndexes.includes(index)
+      );
+      current = {
+        ...current,
+        pushedOffsetIndexes: [...current.pushedOffsetIndexes, offsetIndex],
+      };
+      pushedTaskIds.push(current.id);
+      if (current.pushedOffsetIndexes.length >= current.offsetsHours.length) {
+        current = {
+          ...current,
+          cycleStart: current.cycleStart + current.cycleHours * HOUR_MS,
+          pushedOffsetIndexes: [],
+        };
+      }
+      due = nextPushTime(current);
+    }
+    return current;
+  });
+  return { tasks: updated, pushedTaskIds };
+}
+
+export function sortByNextPush(tasks: PushTask[]): PushTask[] {
+  return [...tasks].sort((a, b) => {
+    const aTime = nextPushTime(a) ?? Infinity;
+    const bTime = nextPushTime(b) ?? Infinity;
+    return aTime - bTime;
+  });
+}
