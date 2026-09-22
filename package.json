@@ -4,7 +4,6 @@
   "private": true,
   "description": "Pomodoro timer + periodic push-task widget desktop app",
   "main": "dist-electron/main.js",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json && tsc -p electron/tsconfig.json && vite build",
