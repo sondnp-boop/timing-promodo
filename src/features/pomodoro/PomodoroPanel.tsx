@@ -50,7 +50,7 @@ export function PomodoroPanel() {
     <CollapsiblePanel title="Đồng hồ Pomodoro" defaultExpanded={false}>
       <PomodoroClock state={state} now={now} onStart={handleStart} onStop={handleStop} />
       <PomodoroSettingsPanel settings={settings} onChange={handleSettingsChange} />
-      <MusicSettingsPanel settings={settings} onChange={handleSettingsChange} onPlay={() => getElectronApi().playMusic()} />
+      <MusicSettingsPanel settings={settings} onChange={handleSettingsChange} />
     </CollapsiblePanel>
   );
 }

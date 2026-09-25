@@ -4,6 +4,7 @@ import { App } from '../../src/App';
 
 function stubElectronAPI() {
   (window as any).electronAPI = {
+    minimizeWindow: vi.fn(),
     getData: vi.fn().mockResolvedValue({
       pomodoroSettings: { workMinutes: 25, breakMinutes: 5, musicGenre: 'pomodoro' },
       playlists: { mixset: [], pomodoro: [], baroque: [] },

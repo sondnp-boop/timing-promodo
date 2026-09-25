@@ -2,6 +2,7 @@ import type { AppData, PomodoroSettings, PomodoroState, PushTask } from '../shar
 
 interface ElectronAPI {
   getData(): Promise<AppData>;
+  minimizeWindow(): Promise<void>;
   updatePomodoroSettings(settings: PomodoroSettings): Promise<PomodoroSettings>;
   startPomodoro(phase: 'work' | 'break'): Promise<PomodoroState>;
   stopPomodoro(): Promise<null>;

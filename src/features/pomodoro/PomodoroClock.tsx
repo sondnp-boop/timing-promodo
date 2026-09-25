@@ -19,16 +19,20 @@ export function PomodoroClock({ state, now, onStart, onStop }: PomodoroClockProp
     <div className="pomodoro-clock" data-testid="pomodoro-clock">
       {state ? (
         <>
-          <div className="pomodoro-clock__phase">{state.phase === 'work' ? 'Đang làm việc' : 'Đang nghỉ'}</div>
-          <div className="pomodoro-clock__time">{formatRemaining(state.phaseEndsAt - now)}</div>
-          <button type="button" onClick={onStop}>
+          <div className="pomodoro-clock__display">
+            <div className="pomodoro-clock__phase">{state.phase === 'work' ? 'Đang làm việc' : 'Đang nghỉ'}</div>
+            <div className="pomodoro-clock__time">{formatRemaining(state.phaseEndsAt - now)}</div>
+          </div>
+          <button type="button" className="pomodoro-clock__btn" onClick={onStop}>
             Dừng
           </button>
         </>
       ) : (
         <>
-          <div className="pomodoro-clock__idle">Chưa chạy</div>
-          <button type="button" onClick={() => onStart('work')}>
+          <div className="pomodoro-clock__display">
+            <div className="pomodoro-clock__idle">Chưa chạy</div>
+          </div>
+          <button type="button" className="pomodoro-clock__btn" onClick={() => onStart('work')}>
             Bắt đầu làm việc
           </button>
         </>

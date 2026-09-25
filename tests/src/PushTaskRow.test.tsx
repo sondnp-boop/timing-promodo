@@ -8,7 +8,6 @@ function makeTask(overrides: Partial<PushTask> = {}): PushTask {
   return {
     id: 't1',
     name: 'Task A',
-    pusher: 'Alice',
     cycleHours: 24,
     offsetsHours: [3, 6, 9],
     cycleStart: 0,
@@ -20,13 +19,12 @@ function makeTask(overrides: Partial<PushTask> = {}): PushTask {
 }
 
 describe('PushTaskRow', () => {
-  it('hiển thị tên, người push và progress bar đúng màu theo colorIndex', () => {
+  it('hiển thị tên và progress bar đúng màu theo colorIndex', () => {
     const task = makeTask({ colorIndex: 2 });
     render(
       <PushTaskRow task={task} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />
     );
     expect(screen.getByText('Task A')).toBeInTheDocument();
-    expect(screen.getByText('Alice')).toBeInTheDocument();
     const bar = screen.getByTestId('progress-t1').firstChild as HTMLElement;
     expect(bar.style.backgroundColor).toBeTruthy();
     expect(TASK_COLOR_PALETTE).toContain(rgbToHex(bar.style.backgroundColor));
@@ -50,7 +48,7 @@ describe('PushTaskRow', () => {
     render(
       <PushTaskRow task={task} now={0} onToggleDone={onToggleDone} onDelete={vi.fn()} onEditOffsets={vi.fn()} />
     );
-    fireEvent.click(screen.getByText('Done'));
+    fireEvent.click(screen.getByLabelText('Đánh dấu hoàn thành'));
     expect(onToggleDone).toHaveBeenCalledWith('t1');
   });
 
@@ -58,8 +56,22 @@ describe('PushTaskRow', () => {
     const onDelete = vi.fn();
     const task = makeTask();
     render(<PushTaskRow task={task} now={0} onToggleDone={vi.fn()} onDelete={onDelete} onEditOffsets={vi.fn()} />);
-    fireEvent.click(screen.getByText('Xóa'));
+    fireEvent.click(screen.getByLabelText('Xóa đầu việc'));
     expect(onDelete).toHaveBeenCalledWith('t1');
+  });
+
+  it('gọi onEditOffsets khi bấm icon sửa giờ và 3 icon nằm cùng dòng với thông tin task', () => {
+    const onEditOffsets = vi.fn();
+    render(
+      <PushTaskRow task={makeTask()} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={onEditOffsets} />
+    );
+    const edit = screen.getByLabelText('Sửa giờ push');
+    fireEvent.click(edit);
+    expect(onEditOffsets).toHaveBeenCalledWith('t1');
+    const top = screen.getByText('Task A').closest('.push-task-row__top')!;
+    expect(top).toContainElement(edit);
+    expect(top).toContainElement(screen.getByLabelText('Xóa đầu việc'));
+    expect(top).toContainElement(screen.getByLabelText('Đánh dấu hoàn thành'));
   });
 
   it('hiển thị "Đã hoàn tất chu kỳ" khi đã push hết offset', () => {

@@ -7,7 +7,6 @@ function makeTask(id: string, offsetHour: number): PushTask {
   return {
     id,
     name: `Task ${id}`,
-    pusher: 'Alice',
     cycleHours: 24,
     offsetsHours: [offsetHour],
     cycleStart: 0,

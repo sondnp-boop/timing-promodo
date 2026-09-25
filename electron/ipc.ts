@@ -37,7 +37,7 @@ export function registerIpcHandlers(store: JsonStore, getWindow: () => BrowserWi
     for (const taskId of pushedTaskIds) {
       const task = tasks.find((t) => t.id === taskId);
       if (task) {
-        showNotification('Đến giờ push công việc', `${task.name} — người push: ${task.pusher}`);
+        showNotification('Đến giờ push công việc', task.name);
       }
     }
     persist();
@@ -60,6 +60,10 @@ export function registerIpcHandlers(store: JsonStore, getWindow: () => BrowserWi
   }, TICK_INTERVAL_MS);
 
   ipcMain.handle('data:get', () => data);
+
+  ipcMain.handle('window:minimize', () => {
+    getWindow()?.minimize();
+  });
 
   ipcMain.handle('pomodoro:updateSettings', (_e, settings: PomodoroSettings) => {
     data = { ...data, pomodoroSettings: settings };

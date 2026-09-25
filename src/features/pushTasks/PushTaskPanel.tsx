@@ -5,6 +5,8 @@ import { PushTaskForm, NewTaskInput } from './PushTaskForm';
 import { getElectronApi } from '../../api/electronApi';
 import { PushTask } from '../../shared/types';
 
+const DEFAULT_CYCLE_HOURS = 24;
+
 export function PushTaskPanel() {
   const [tasks, setTasks] = useState<PushTask[]>([]);
   const [now, setNow] = useState(Date.now());
@@ -22,7 +24,7 @@ export function PushTaskPanel() {
 
   async function handleAdd(input: NewTaskInput) {
     const api = getElectronApi();
-    const updated = await api.addTask(input);
+    const updated = await api.addTask({ ...input, cycleHours: DEFAULT_CYCLE_HOURS });
     setTasks(updated);
   }
 

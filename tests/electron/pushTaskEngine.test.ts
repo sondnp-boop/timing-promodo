@@ -8,7 +8,6 @@ function makeTask(overrides: Partial<PushTask> = {}): PushTask {
   return {
     id: 'task-1',
     name: 'Task A',
-    pusher: 'Alice',
     cycleHours: 24,
     offsetsHours: [3, 6, 9],
     cycleStart: 0,

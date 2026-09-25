@@ -1,5 +1,6 @@
 import { PushTask } from '../../shared/types';
 import { colorForIndex } from '../../shared/colorPalette';
+import { CheckIcon, EditIcon, TrashIcon } from '../../shared/icons';
 import { nextPushTime } from '../../../electron/modules/pushTasks/pushTaskEngine';
 
 interface PushTaskRowProps {
@@ -23,27 +24,43 @@ export function PushTaskRow({ task, now, onToggleDone, onDelete, onEditOffsets }
 
   return (
     <div className="push-task-row" data-testid={`push-task-row-${task.id}`}>
-      <div className="push-task-row__info">
-        <strong>{task.name}</strong>
-        <span>{task.pusher}</span>
-        <span>{remainingLabel}</span>
+      <div className="push-task-row__top">
+        <div className="push-task-row__info">
+          <strong className={task.done ? 'is-done' : undefined}>{task.name}</strong>
+          <span>{remainingLabel}</span>
+        </div>
+        <div className="push-task-row__actions">
+          <button
+            type="button"
+            className="icon-btn icon-btn--done"
+            aria-label={task.done ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành'}
+            onClick={() => onToggleDone(task.id)}
+          >
+            <CheckIcon />
+          </button>
+          <button
+            type="button"
+            className="icon-btn icon-btn--edit"
+            aria-label="Sửa giờ push"
+            onClick={() => onEditOffsets(task.id)}
+          >
+            <EditIcon />
+          </button>
+          <button
+            type="button"
+            className="icon-btn icon-btn--delete"
+            aria-label="Xóa đầu việc"
+            onClick={() => onDelete(task.id)}
+          >
+            <TrashIcon />
+          </button>
+        </div>
       </div>
       <div className="push-task-row__progress" data-testid={`progress-${task.id}`}>
         <div
           className="push-task-row__progress-bar"
           style={{ width: `${progressPercent}%`, backgroundColor: color }}
         />
-      </div>
-      <div className="push-task-row__actions">
-        <button type="button" onClick={() => onToggleDone(task.id)}>
-          {task.done ? 'Bỏ done' : 'Done'}
-        </button>
-        <button type="button" onClick={() => onEditOffsets(task.id)}>
-          Sửa giờ
-        </button>
-        <button type="button" onClick={() => onDelete(task.id)}>
-          Xóa
-        </button>
       </div>
     </div>
   );

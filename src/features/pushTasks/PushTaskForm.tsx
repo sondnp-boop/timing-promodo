@@ -1,9 +1,7 @@
-import { FormEvent, useState } from 'react';
+import { KeyboardEvent, useState } from 'react';
 
 export interface NewTaskInput {
   name: string;
-  pusher: string;
-  cycleHours: number;
   offsetsHours: number[];
 }
 
@@ -13,40 +11,47 @@ interface PushTaskFormProps {
 
 export function PushTaskForm({ onSubmit }: PushTaskFormProps) {
   const [name, setName] = useState('');
-  const [pusher, setPusher] = useState('');
-  const [cycleHours, setCycleHours] = useState(24);
   const [offsetsText, setOffsetsText] = useState('3,6,9');
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  function submit() {
     const offsetsHours = offsetsText
-      .split(',')
-      .map((s) => Number(s.trim()))
-      .filter((n) => !Number.isNaN(n) && n > 0);
+      .split(/[,\s]+/)
+      .map(Number)
+      .filter((n) => Number.isFinite(n) && n > 0);
     if (!name.trim() || offsetsHours.length === 0) {
       return;
     }
-    onSubmit({ name: name.trim(), pusher: pusher.trim(), cycleHours, offsetsHours });
+    onSubmit({ name: name.trim(), offsetsHours });
     setName('');
-    setPusher('');
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submit();
+    }
   }
 
   return (
-    <form className="push-task-form" onSubmit={handleSubmit}>
-      <input placeholder="Tên đầu việc" value={name} onChange={(e) => setName(e.target.value)} />
-      <input placeholder="Người push" value={pusher} onChange={(e) => setPusher(e.target.value)} />
-      <input
-        type="number"
-        placeholder="Chu kỳ (giờ)"
-        value={cycleHours}
-        onChange={(e) => setCycleHours(Number(e.target.value))}
+    <div className="push-task-form">
+      <textarea
+        className="push-task-form__name"
+        rows={1}
+        placeholder="Tên đầu việc"
+        aria-label="Tên đầu việc"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={handleKeyDown}
       />
-      <input
-        placeholder="Mốc nhắc (giờ), vd 3,6,9"
+      <textarea
+        className="push-task-form__offsets"
+        rows={1}
+        placeholder="3,6,9"
+        aria-label="Mốc nhắc (giờ)"
         value={offsetsText}
         onChange={(e) => setOffsetsText(e.target.value)}
+        onKeyDown={handleKeyDown}
       />
-      <button type="submit">Thêm đầu việc</button>
-    </form>
+    </div>
   );
 }
