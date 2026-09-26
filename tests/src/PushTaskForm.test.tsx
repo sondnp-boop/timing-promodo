@@ -19,17 +19,40 @@ describe('PushTaskForm', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('mặc định mốc nhắc là 3,6,9', () => {
-    const { offsets } = setup();
-    expect(offsets).toHaveValue('3,6,9');
+  it('ban đầu cả 2 ô trống; ô mốc nhắc chỉ có gợi ý 3,6,9', () => {
+    const { name, offsets } = setup();
+    expect(name).toHaveValue('');
+    expect(offsets).toHaveValue('');
+    expect(offsets).toHaveAttribute('placeholder', '3,6,9');
   });
 
-  it('Enter trong ô tên thêm đầu việc và xóa ô tên', () => {
-    const { onSubmit, name } = setup();
+  it('Enter trong ô tên thêm đầu việc rồi xóa trắng cả 2 ô', () => {
+    const { onSubmit, name, offsets } = setup();
     fireEvent.change(name, { target: { value: 'Task A' } });
+    fireEvent.change(offsets, { target: { value: '3,6,9' } });
     fireEvent.keyDown(name, { key: 'Enter' });
     expect(onSubmit).toHaveBeenCalledWith({ name: 'Task A', offsetsHours: [3, 6, 9] });
     expect(name).toHaveValue('');
+    expect(offsets).toHaveValue('');
+  });
+
+  it('Enter trong ô mốc nhắc cũng xóa trắng cả 2 ô', () => {
+    const { onSubmit, name, offsets } = setup();
+    fireEvent.change(name, { target: { value: 'Task A' } });
+    fireEvent.change(offsets, { target: { value: '1,2' } });
+    fireEvent.keyDown(offsets, { key: 'Enter' });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(name).toHaveValue('');
+    expect(offsets).toHaveValue('');
+  });
+
+  it('không xóa ô nào khi dữ liệu chưa hợp lệ (Enter không thêm được)', () => {
+    const { onSubmit, name, offsets } = setup();
+    fireEvent.change(name, { target: { value: 'Task A' } });
+    fireEvent.keyDown(name, { key: 'Enter' });
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(name).toHaveValue('Task A');
+    expect(offsets).toHaveValue('');
   });
 
   it('Enter trong ô mốc nhắc cũng thêm đầu việc', () => {
@@ -88,7 +111,7 @@ describe('PushTaskForm', () => {
     }
   });
 
-  it('chế độ sửa: điền tên + mốc giờ và hiện nhãn "Sửa"; thoát thì trả về mặc định', () => {
+  it('chế độ sửa: điền tên + mốc giờ và hiện nhãn "Sửa"; thoát thì cả 2 ô trống', () => {
     const onSubmit = vi.fn();
     const { rerender } = render(<PushTaskForm onSubmit={onSubmit} />);
     expect(screen.queryByText('Sửa')).not.toBeInTheDocument();
@@ -105,7 +128,7 @@ describe('PushTaskForm', () => {
     rerender(<PushTaskForm onSubmit={onSubmit} editing={null} />);
     expect(screen.queryByText('Sửa')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Tên đầu việc')).toHaveValue('');
-    expect(screen.getByLabelText('Mốc nhắc (giờ)')).toHaveValue('3,6,9');
+    expect(screen.getByLabelText('Mốc nhắc (giờ)')).toHaveValue('');
   });
 
   it('Escape gọi onCancelEdit khi đang sửa, không làm gì khi thêm mới', () => {

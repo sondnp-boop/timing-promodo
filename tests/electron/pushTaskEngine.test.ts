@@ -84,6 +84,31 @@ describe('pushTaskEngine', () => {
       expect(sorted.map((t) => t.id)).toEqual(['near', 'far']);
     });
 
+    it('task đã done luôn nằm dưới cùng dù mốc push gần hơn', () => {
+      const doneSoon = makeTask({ id: 'done-soon', cycleStart: 0, offsetsHours: [1], done: true });
+      const pendingFar = makeTask({ id: 'far', cycleStart: 0, offsetsHours: [10] });
+      const pendingNear = makeTask({ id: 'near', cycleStart: 0, offsetsHours: [2] });
+      expect(sortByNextPush([doneSoon, pendingFar, pendingNear]).map((t) => t.id)).toEqual([
+        'near',
+        'far',
+        'done-soon',
+      ]);
+    });
+
+    it('task hết mốc nhưng chưa done nằm trên task đã done; các task done sắp theo mốc', () => {
+      const expiredNotDone = makeTask({ id: 'expired', pushedOffsetIndexes: [0, 1, 2] });
+      const done1 = makeTask({ id: 'd1', cycleStart: 0, offsetsHours: [5], done: true });
+      const done2 = makeTask({ id: 'd2', cycleStart: 0, offsetsHours: [1], done: true });
+      expect(sortByNextPush([done1, expiredNotDone, done2]).map((t) => t.id)).toEqual(['expired', 'd2', 'd1']);
+    });
+
+    it('bỏ done thì task quay lại đúng vị trí theo mốc', () => {
+      const a = makeTask({ id: 'a', cycleStart: 0, offsetsHours: [1], done: true });
+      const b = makeTask({ id: 'b', cycleStart: 0, offsetsHours: [2] });
+      expect(sortByNextPush([a, b]).map((t) => t.id)).toEqual(['b', 'a']);
+      expect(sortByNextPush([{ ...a, done: false }, b]).map((t) => t.id)).toEqual(['a', 'b']);
+    });
+
     it('task đã hết chu kỳ (nextPushTime null) xếp cuối', () => {
       const taskDone = makeTask({ id: 'done', pushedOffsetIndexes: [0, 1, 2] });
       const taskPending = makeTask({ id: 'pending', cycleStart: 0, offsetsHours: [5] });

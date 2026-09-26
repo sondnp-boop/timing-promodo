@@ -102,11 +102,11 @@ Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.t
 ## 7. Quy tắc nghiệp vụ
 
 ### 7.1 Push task
-- Thêm: 2 `<textarea>` trên cùng 1 dòng, **nằm trên danh sách**: tên + mốc giờ (mặc định `3,6,9`, tách bằng dấu phẩy/khoảng trắng/xuống dòng, chỉ nhận số > 0). `Enter` = thêm, `Shift+Enter` = xuống dòng. Textarea tự giãn theo `scrollHeight`. Không có nút thêm, không có ô "người push", không có ô chu kỳ.
+- Thêm: 2 `<textarea>` trên cùng 1 dòng, **nằm trên danh sách**: tên + mốc giờ (tách bằng dấu phẩy/khoảng trắng/xuống dòng, chỉ nhận số > 0). `Enter` = thêm, `Shift+Enter` = xuống dòng. **Cả 2 ô luôn trống** khi mở app và sau mỗi lần Enter thành công (thêm hoặc sửa) — ô mốc chỉ có placeholder gợi ý `3,6,9`, không điền sẵn; nếu tên trống hoặc mốc không hợp lệ thì Enter không làm gì và không xóa gì. Textarea tự giãn theo `scrollHeight`. Không có nút thêm, không có ô "người push", không có ô chu kỳ.
 - Mốc `offsetsHours` tính bằng giờ (cho phép lẻ, vd `0.5`) **kể từ `cycleStart`** (thời điểm tạo hoặc lần sửa mốc). **Không có chu kỳ lặp lại**: sau mốc cuối task dừng và báo đỏ/xanh cho tới khi bấm Done (đã bỏ auto-roll 24h).
 - Thời gian tính theo **giờ thật (epoch)**, tiếp tục trôi khi app tắt (mở lại sau 30 phút → chấm đỏ nhích thêm 30 phút; mốc lỡ sẽ bắn thông báo ở tick đầu tiên).
 - Tick 1s trong `ipc.ts`: `processDueTasks` đánh dấu mốc đã tới (`pushedOffsetIndexes`), ghi `pushHistory`, bắn thông báo Windows "Đến giờ push công việc", gửi `tasks:updated`. Task `done` bị bỏ qua.
-- Sắp xếp: theo `nextPushTime` tăng dần (task hết mốc → cuối). Hiển thị 5 dòng đầu, còn lại nút "Xem thêm N task"; dòng đang nhấp nháy (`rowAlert != null`) luôn hiện dù ngoài top 5.
+- Sắp xếp (`sortByNextPush`, chỉ sắp ở main process, renderer hiển thị đúng thứ tự nhận được): task **chưa done** theo `nextPushTime` tăng dần (task đã hết mốc nhưng chưa done → cuối nhóm này); task **đã Done luôn nằm dưới cùng** (theo mốc trong nhóm done). Bỏ Done thì task quay về vị trí theo mốc. Hiển thị 5 dòng đầu, còn lại nút "Xem thêm N task"; dòng đang nhấp nháy (`rowAlert != null`) luôn hiện dù ngoài top 5.
 - **Sửa** (icon bút): điền tên + mốc vào form, hiện nhãn "Sửa"; Enter cập nhật (`tasks:update`); đổi mốc → reset `cycleStart=now` & `pushedOffsetIndexes=[]`; chỉ đổi tên → giữ tiến độ. `Escape` hủy sửa. Xóa task đang sửa thì thoát chế độ sửa.
 - **Xóa**: hiện `ConfirmDialog` trong app (KHÔNG dùng `window.confirm` — trên Electron nó làm mất focus ô nhập). Đồng ý mới gọi `tasks:delete`.
 - **Done** (icon check) là toggle; done → gạch ngang, không nhấp nháy, không bắn push.
@@ -149,7 +149,7 @@ Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.t
 ## 9. Test
 
 - Vitest, môi trường jsdom, globals bật, setup `tests/setupTests.ts`. Chạy 1 file: `npx vitest run tests/src/PushTaskRow.test.tsx`.
-- Hiện ~150 test, 22 file. Component test stub `window.electronAPI = {...}` (chỉ cần khai báo hàm được gọi).
+- Hiện ~160 test, 22 file. Component test stub `window.electronAPI = {...}` (chỉ cần khai báo hàm được gọi).
 - jsdom **không có layout/CSS file** → quy tắc CSS quan trọng (sticky, tỉ lệ cột 2/2/6/2, có class màu nhấp nháy) được kiểm bằng cách đọc thẳng text `src/App.css` (`tests/src/appCss.test.ts`). Sửa các rule này thì sửa test tương ứng.
 - Mock `scrollHeight` bằng `Object.defineProperty` trên `HTMLTextAreaElement.prototype` (không dùng `vi.spyOn` getter — gây đệ quy vô hạn), nhớ `delete` sau test.
 - Test theo thời gian: truyền `now` cố định vào component/hàm thuần thay vì fake timers. Test tích hợp Panel dùng `Date.now()` thật, chỉ assert regex lớp `flash-(red|green)` vì màu phụ thuộc giây chẵn/lẻ.
@@ -173,6 +173,7 @@ Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.t
 6. `feature_timeline_bar_alerts` – timeline + chấm đỏ, nhấp nháy theo thời gian, bỏ chu kỳ lặp, sticky title.
 7. `feature_export_confirm_units` – nhãn phút/tiếng, tooltip, xác nhận xóa, Export.
 8. `feature_overall_doc` – file này.
+9. `feature_done_bottom_clear_form` – task Done xuống cuối danh sách; form thêm/sửa xóa trắng cả 2 ô sau Enter (và trống khi mở app).
 
 (Các branch chưa được merge vào một nhánh chính; mỗi branch tách từ branch trước.)
 

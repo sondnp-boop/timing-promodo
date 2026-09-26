@@ -96,11 +96,36 @@ describe('PushTaskPanel', () => {
   it('không ở chế độ sửa thì Enter vẫn thêm mới', async () => {
     await renderPanel([makeTask('1')]);
     fireEvent.change(screen.getByLabelText('Tên đầu việc'), { target: { value: 'New' } });
+    fireEvent.change(screen.getByLabelText('Mốc nhắc (giờ)'), { target: { value: '3,6,9' } });
     fireEvent.keyDown(screen.getByLabelText('Tên đầu việc'), { key: 'Enter' });
     await waitFor(() =>
       expect(api.addTask).toHaveBeenCalledWith({ name: 'New', offsetsHours: [3, 6, 9] })
     );
     expect(api.updateTask).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByLabelText('Tên đầu việc')).toHaveValue(''));
+    expect(screen.getByLabelText('Mốc nhắc (giờ)')).toHaveValue('');
+  });
+
+  it('sau khi sửa xong (Enter) cả 2 ô được xóa trắng', async () => {
+    await renderPanel([makeTask('1')]);
+    fireEvent.click(screen.getByLabelText('Sửa giờ push'));
+    fireEvent.change(screen.getByLabelText('Tên đầu việc'), { target: { value: 'Renamed' } });
+    fireEvent.keyDown(screen.getByLabelText('Tên đầu việc'), { key: 'Enter' });
+    await waitFor(() => expect(api.updateTask).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByLabelText('Tên đầu việc')).toHaveValue(''));
+    expect(screen.getByLabelText('Mốc nhắc (giờ)')).toHaveValue('');
+  });
+
+  it('bấm Done thì hiển thị đúng thứ tự danh sách mà main trả về (done xuống cuối)', async () => {
+    const a = makeTask('A');
+    const b = makeTask('B');
+    await renderPanel([a, b]);
+    api.markTaskDone.mockResolvedValue([b, { ...a, done: true }]);
+    fireEvent.click(within(screen.getByTestId('push-task-row-A')).getByLabelText('Đánh dấu hoàn thành'));
+    await waitFor(() => {
+      const ids = screen.getAllByTestId(/^push-task-row-/).map((el) => el.getAttribute('data-testid'));
+      expect(ids).toEqual(['push-task-row-B', 'push-task-row-A']);
+    });
   });
 
   it('xóa task đang sửa thì thoát chế độ sửa (sau khi xác nhận)', async () => {

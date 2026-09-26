@@ -46,8 +46,12 @@ export function processDueTasks(tasks: PushTask[], now: number): { tasks: PushTa
   return { tasks: updated, pushedTaskIds };
 }
 
+/** Task đang làm sắp xếp theo mốc push gần nhất; task đã done luôn nằm dưới cùng. */
 export function sortByNextPush(tasks: PushTask[]): PushTask[] {
   return [...tasks].sort((a, b) => {
+    if (a.done !== b.done) {
+      return a.done ? 1 : -1;
+    }
     const aTime = nextPushTime(a) ?? Infinity;
     const bTime = nextPushTime(b) ?? Infinity;
     return aTime - bTime;

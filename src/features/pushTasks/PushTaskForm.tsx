@@ -11,8 +11,6 @@ interface PushTaskFormProps {
   onCancelEdit?: () => void;
 }
 
-const DEFAULT_OFFSETS = '3,6,9';
-
 function useAutoGrow(value: string) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
@@ -26,7 +24,7 @@ function useAutoGrow(value: string) {
 
 export function PushTaskForm({ onSubmit, editing, onCancelEdit }: PushTaskFormProps) {
   const [name, setName] = useState('');
-  const [offsetsText, setOffsetsText] = useState(DEFAULT_OFFSETS);
+  const [offsetsText, setOffsetsText] = useState('');
   const nameRef = useAutoGrow(name);
   const offsetsRef = useAutoGrow(offsetsText);
 
@@ -36,7 +34,7 @@ export function PushTaskForm({ onSubmit, editing, onCancelEdit }: PushTaskFormPr
       setOffsetsText(editing.offsetsHours.join(','));
     } else {
       setName('');
-      setOffsetsText(DEFAULT_OFFSETS);
+      setOffsetsText('');
     }
   }, [editing]);
 
@@ -50,6 +48,7 @@ export function PushTaskForm({ onSubmit, editing, onCancelEdit }: PushTaskFormPr
     }
     onSubmit({ name: name.trim(), offsetsHours });
     setName('');
+    setOffsetsText('');
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
