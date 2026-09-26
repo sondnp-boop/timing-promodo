@@ -20,6 +20,18 @@ export function startPhase(phase: PomodoroPhase, config: PomodoroConfig, now: nu
   };
 }
 
+export const WARNING_SECONDS = [10, 5];
+
+/** Mốc cảnh báo (giây còn lại) nhỏ nhất đã tới mà chưa cảnh báo; null nếu không có. */
+export function dueWarning(state: PomodoroState, now: number, warned: ReadonlySet<number>): number | null {
+  if (!state.running) {
+    return null;
+  }
+  const remaining = Math.ceil((state.phaseEndsAt - now) / 1000);
+  const reached = WARNING_SECONDS.filter((mark) => remaining <= mark && !warned.has(mark));
+  return reached.length > 0 ? Math.min(...reached) : null;
+}
+
 /**
  * Kiểm tra xem đã tới lúc chuyển pha chưa; nếu có, trả về state của pha kế tiếp
  * (work -> break, break -> work). Nếu chưa tới, trả về null.

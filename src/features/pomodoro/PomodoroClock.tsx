@@ -19,7 +19,7 @@ export function PomodoroClock({ state, now, onStart, onStop }: PomodoroClockProp
     <div className="pomodoro-clock" data-testid="pomodoro-clock">
       {state ? (
         <>
-          <div className="pomodoro-clock__display">
+          <div className={`pomodoro-clock__display pomodoro-clock__display--${state.phase}`}>
             <div className="pomodoro-clock__phase">{state.phase === 'work' ? 'Đang làm việc' : 'Đang nghỉ'}</div>
             <div className="pomodoro-clock__time">{formatRemaining(state.phaseEndsAt - now)}</div>
           </div>

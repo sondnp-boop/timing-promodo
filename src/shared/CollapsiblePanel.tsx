@@ -2,11 +2,12 @@ import { useState, ReactNode } from 'react';
 
 interface CollapsiblePanelProps {
   title: string;
+  badge?: number;
   defaultExpanded: boolean;
   children: ReactNode;
 }
 
-export function CollapsiblePanel({ title, defaultExpanded, children }: CollapsiblePanelProps) {
+export function CollapsiblePanel({ title, badge, defaultExpanded, children }: CollapsiblePanelProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
@@ -22,7 +23,14 @@ export function CollapsiblePanel({ title, defaultExpanded, children }: Collapsib
           }
         }}
       >
-        <span>{title}</span>
+        <span>
+          <span>{title}</span>
+          {badge !== undefined && (
+            <span className="collapsible-panel__badge" data-testid="panel-badge">
+              {badge}
+            </span>
+          )}
+        </span>
         <span aria-hidden="true">{expanded ? '▾' : '▸'}</span>
       </header>
       {expanded && <div className="collapsible-panel__body">{children}</div>}

@@ -38,7 +38,6 @@ export function PomodoroPanel() {
   async function handleStart(phase: 'work' | 'break') {
     const api = getElectronApi();
     setState(await api.startPomodoro(phase));
-    await api.playMusic();
   }
 
   async function handleStop() {
@@ -49,8 +48,17 @@ export function PomodoroPanel() {
   return (
     <CollapsiblePanel title="Đồng hồ Pomodoro" defaultExpanded={false}>
       <PomodoroClock state={state} now={now} onStart={handleStart} onStop={handleStop} />
-      <PomodoroSettingsPanel settings={settings} onChange={handleSettingsChange} />
-      <MusicSettingsPanel settings={settings} onChange={handleSettingsChange} />
+      <PomodoroSettingsPanel
+        settings={settings}
+        onChange={handleSettingsChange}
+        onEnter={() => handleStart('work')}
+      />
+      <MusicSettingsPanel
+        settings={settings}
+        onChange={handleSettingsChange}
+        onPlay={() => getElectronApi().playMusic()}
+        onEnter={() => handleStart('work')}
+      />
     </CollapsiblePanel>
   );
 }

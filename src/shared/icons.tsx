@@ -28,6 +28,15 @@ export function EditIcon() {
   );
 }
 
+export function PlayIcon() {
+  return (
+    <svg {...base}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M10 8.5l6 3.5-6 3.5z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function TrashIcon() {
   return (
     <svg {...base}>

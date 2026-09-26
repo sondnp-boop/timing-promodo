@@ -4,6 +4,7 @@ import { PomodoroSettings } from '../../shared/types';
 interface PomodoroSettingsPanelProps {
   settings: PomodoroSettings;
   onChange: (settings: PomodoroSettings) => void;
+  onEnter: () => void;
 }
 
 export function parseWorkBreak(text: string): { work: number; rest: number } | null {
@@ -16,7 +17,7 @@ export function parseWorkBreak(text: string): { work: number; rest: number } | n
   return work > 0 && rest > 0 ? { work, rest } : null;
 }
 
-export function PomodoroSettingsPanel({ settings, onChange }: PomodoroSettingsPanelProps) {
+export function PomodoroSettingsPanel({ settings, onChange, onEnter }: PomodoroSettingsPanelProps) {
   const [text, setText] = useState(`${settings.workMinutes}/${settings.breakMinutes}`);
 
   function handleChange(value: string) {
@@ -34,6 +35,11 @@ export function PomodoroSettingsPanel({ settings, onChange }: PomodoroSettingsPa
         placeholder="làm/nghỉ, vd 30/5"
         value={text}
         onChange={(e) => handleChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            onEnter();
+          }
+        }}
       />
     </div>
   );

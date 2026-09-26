@@ -1,6 +1,7 @@
 import { PushTask } from '../../shared/types';
 import { colorForIndex } from '../../shared/colorPalette';
 import { CheckIcon, EditIcon, TrashIcon } from '../../shared/icons';
+import { formatRemainingLabel } from '../../shared/formatRemaining';
 import { nextPushTime } from '../../../electron/modules/pushTasks/pushTaskEngine';
 
 interface PushTaskRowProps {
@@ -19,8 +20,7 @@ export function PushTaskRow({ task, now, onToggleDone, onDelete, onEditOffsets }
   const elapsedInCycle = now - task.cycleStart;
   const progressPercent = due === null ? 100 : Math.min(100, Math.max(0, (elapsedInCycle / cycleMs) * 100));
   const color = colorForIndex(task.colorIndex);
-  const remainingLabel =
-    due === null ? 'Đã hoàn tất chu kỳ' : `Còn ${Math.max(0, Math.round((due - now) / 60000))} phút`;
+  const remainingLabel = due === null ? 'Đã hoàn tất chu kỳ' : formatRemainingLabel(due - now);
 
   return (
     <div className="push-task-row" data-testid={`push-task-row-${task.id}`}>

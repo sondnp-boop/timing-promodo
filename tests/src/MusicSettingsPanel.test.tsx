@@ -5,30 +5,47 @@ import { PomodoroSettings } from '../../src/shared/types';
 
 const base: PomodoroSettings = { workMinutes: 25, breakMinutes: 5, musicGenre: 'pomodoro' };
 
+function setup(settings = base) {
+  const props = { onChange: vi.fn(), onPlay: vi.fn(), onEnter: vi.fn() };
+  const view = render(<MusicSettingsPanel settings={settings} {...props} />);
+  return { ...props, ...view };
+}
+
 describe('MusicSettingsPanel', () => {
-  it('không có nút Phát nhạc và không có nhãn chữ "Thể loại nhạc"', () => {
-    render(<MusicSettingsPanel settings={base} onChange={vi.fn()} />);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    expect(screen.queryByText('Thể loại nhạc')).not.toBeInTheDocument();
-    expect(screen.getByRole('combobox')).toHaveValue('pomodoro');
+  it('không còn combobox thể loại; ô URL luôn hiện', () => {
+    setup();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Dán link YouTube')).toBeInTheDocument();
   });
 
-  it('ô link chỉ hiện khi chọn custom và nằm cùng dòng với combobox', () => {
-    const { rerender, container } = render(<MusicSettingsPanel settings={base} onChange={vi.fn()} />);
-    expect(screen.queryByPlaceholderText('Dán link YouTube')).not.toBeInTheDocument();
-
-    rerender(<MusicSettingsPanel settings={{ ...base, musicGenre: 'custom' }} onChange={vi.fn()} />);
+  it('ô URL đứng bên trái nút Play trong cùng một dòng', () => {
+    const { container } = setup();
+    const row = container.querySelector('.music-settings')!;
     const input = screen.getByPlaceholderText('Dán link YouTube');
-    expect(container.querySelector('.music-settings')).toContainElement(input);
-    expect(container.querySelector('.music-settings')).toContainElement(screen.getByRole('combobox'));
+    const play = screen.getByLabelText('Phát nhạc');
+    expect(row).toContainElement(input);
+    expect(row).toContainElement(play);
+    expect(input.compareDocumentPosition(play) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('đổi thể loại và nhập link gọi onChange', () => {
-    const onChange = vi.fn();
-    render(<MusicSettingsPanel settings={{ ...base, musicGenre: 'custom' }} onChange={onChange} />);
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'baroque' } });
-    expect(onChange).toHaveBeenCalledWith({ ...base, musicGenre: 'baroque' });
+  it('bấm Play gọi onPlay', () => {
+    const { onPlay } = setup();
+    fireEvent.click(screen.getByLabelText('Phát nhạc'));
+    expect(onPlay).toHaveBeenCalledTimes(1);
+  });
+
+  it('Enter trong ô URL gọi onEnter; phím khác thì không', () => {
+    const { onEnter } = setup();
+    const input = screen.getByPlaceholderText('Dán link YouTube');
+    fireEvent.keyDown(input, { key: 'a' });
+    expect(onEnter).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onEnter).toHaveBeenCalledTimes(1);
+  });
+
+  it('nhập link gọi onChange với customLink', () => {
+    const { onChange } = setup();
     fireEvent.change(screen.getByPlaceholderText('Dán link YouTube'), { target: { value: 'https://y.be/x' } });
-    expect(onChange).toHaveBeenCalledWith({ ...base, musicGenre: 'custom', customLink: 'https://y.be/x' });
+    expect(onChange).toHaveBeenCalledWith({ ...base, customLink: 'https://y.be/x' });
   });
 });

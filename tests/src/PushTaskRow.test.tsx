@@ -74,6 +74,17 @@ describe('PushTaskRow', () => {
     expect(top).toContainElement(screen.getByLabelText('Đánh dấu hoàn thành'));
   });
 
+  it('hiển thị "Còn x phút" khi < 1 giờ và "Còn x tiếng" khi >= 1 giờ', () => {
+    const task = makeTask({ offsetsHours: [3] });
+    const HOUR = 3_600_000;
+    const { rerender } = render(
+      <PushTaskRow task={task} now={2.5 * HOUR} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />
+    );
+    expect(screen.getByText('Còn 30 phút')).toBeInTheDocument();
+    rerender(<PushTaskRow task={task} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />);
+    expect(screen.getByText('Còn 3 tiếng')).toBeInTheDocument();
+  });
+
   it('hiển thị "Đã hoàn tất chu kỳ" khi đã push hết offset', () => {
     const task = makeTask({ pushedOffsetIndexes: [0, 1, 2] });
     render(<PushTaskRow task={task} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />);

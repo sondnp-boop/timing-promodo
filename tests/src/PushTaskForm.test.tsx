@@ -70,4 +70,53 @@ describe('PushTaskForm', () => {
     fireEvent.keyDown(name, { key: 'Enter' });
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it('textarea giãn chiều cao theo scrollHeight khi nội dung xuống dòng', () => {
+    Object.defineProperty(HTMLTextAreaElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get(this: HTMLTextAreaElement) {
+        return this.value.split('\n').length * 20;
+      },
+    });
+    try {
+      const { name } = setup();
+      expect(name.style.height).toBe('20px');
+      fireEvent.change(name, { target: { value: 'a\nb\nc' } });
+      expect(name.style.height).toBe('60px');
+    } finally {
+      delete (HTMLTextAreaElement.prototype as any).scrollHeight;
+    }
+  });
+
+  it('chế độ sửa: điền tên + mốc giờ và hiện nhãn "Sửa"; thoát thì trả về mặc định', () => {
+    const onSubmit = vi.fn();
+    const { rerender } = render(<PushTaskForm onSubmit={onSubmit} />);
+    expect(screen.queryByText('Sửa')).not.toBeInTheDocument();
+
+    const editing = { name: 'Task X', offsetsHours: [2, 4] };
+    rerender(<PushTaskForm onSubmit={onSubmit} editing={editing} />);
+    expect(screen.getByText('Sửa')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tên đầu việc')).toHaveValue('Task X');
+    expect(screen.getByLabelText('Mốc nhắc (giờ)')).toHaveValue('2,4');
+
+    fireEvent.keyDown(screen.getByLabelText('Tên đầu việc'), { key: 'Enter' });
+    expect(onSubmit).toHaveBeenCalledWith({ name: 'Task X', offsetsHours: [2, 4] });
+
+    rerender(<PushTaskForm onSubmit={onSubmit} editing={null} />);
+    expect(screen.queryByText('Sửa')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Tên đầu việc')).toHaveValue('');
+    expect(screen.getByLabelText('Mốc nhắc (giờ)')).toHaveValue('3,6,9');
+  });
+
+  it('Escape gọi onCancelEdit khi đang sửa, không làm gì khi thêm mới', () => {
+    const onCancelEdit = vi.fn();
+    const editing = { name: 'Task X', offsetsHours: [2] };
+    const { rerender } = render(<PushTaskForm onSubmit={vi.fn()} onCancelEdit={onCancelEdit} />);
+    fireEvent.keyDown(screen.getByLabelText('Tên đầu việc'), { key: 'Escape' });
+    expect(onCancelEdit).not.toHaveBeenCalled();
+
+    rerender(<PushTaskForm onSubmit={vi.fn()} editing={editing} onCancelEdit={onCancelEdit} />);
+    fireEvent.keyDown(screen.getByLabelText('Tên đầu việc'), { key: 'Escape' });
+    expect(onCancelEdit).toHaveBeenCalledTimes(1);
+  });
 });

@@ -18,21 +18,28 @@ describe('parseWorkBreak', () => {
 
 describe('PomodoroSettingsPanel', () => {
   it('chỉ có 1 ô, hiển thị giá trị hiện tại dạng x/y', () => {
-    render(<PomodoroSettingsPanel settings={settings} onChange={vi.fn()} />);
+    render(<PomodoroSettingsPanel settings={settings} onChange={vi.fn()} onEnter={vi.fn()} />);
     expect(screen.getAllByRole('textbox')).toHaveLength(1);
     expect(screen.getByRole('textbox')).toHaveValue('25/5');
   });
 
   it('gọi onChange với giá trị làm/nghỉ khi nhập 30/5', () => {
     const onChange = vi.fn();
-    render(<PomodoroSettingsPanel settings={settings} onChange={onChange} />);
+    render(<PomodoroSettingsPanel settings={settings} onChange={onChange} onEnter={vi.fn()} />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '30/5' } });
     expect(onChange).toHaveBeenCalledWith({ ...settings, workMinutes: 30, breakMinutes: 5 });
   });
 
+  it('Enter gọi onEnter', () => {
+    const onEnter = vi.fn();
+    render(<PomodoroSettingsPanel settings={settings} onChange={vi.fn()} onEnter={onEnter} />);
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' });
+    expect(onEnter).toHaveBeenCalledTimes(1);
+  });
+
   it('không gọi onChange khi giá trị không hợp lệ nhưng vẫn giữ text đang gõ', () => {
     const onChange = vi.fn();
-    render(<PomodoroSettingsPanel settings={settings} onChange={onChange} />);
+    render(<PomodoroSettingsPanel settings={settings} onChange={onChange} onEnter={vi.fn()} />);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '30/' } });
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByRole('textbox')).toHaveValue('30/');

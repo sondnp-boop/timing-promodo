@@ -7,9 +7,14 @@ import { PushTask } from '../../shared/types';
 
 const DEFAULT_CYCLE_HOURS = 24;
 
+interface EditingTask extends NewTaskInput {
+  id: string;
+}
+
 export function PushTaskPanel() {
   const [tasks, setTasks] = useState<PushTask[]>([]);
   const [now, setNow] = useState(Date.now());
+  const [editing, setEditing] = useState<EditingTask | null>(null);
 
   useEffect(() => {
     const api = getElectronApi();
@@ -22,10 +27,25 @@ export function PushTaskPanel() {
     };
   }, []);
 
-  async function handleAdd(input: NewTaskInput) {
+  async function handleSubmit(input: NewTaskInput) {
     const api = getElectronApi();
-    const updated = await api.addTask({ ...input, cycleHours: DEFAULT_CYCLE_HOURS });
-    setTasks(updated);
+    if (editing) {
+      const original = tasks.find((t) => t.id === editing.id);
+      setEditing(null);
+      if (!original) {
+        return;
+      }
+      const offsetsChanged = original.offsetsHours.join(',') !== input.offsetsHours.join(',');
+      const updated: PushTask = {
+        ...original,
+        name: input.name,
+        offsetsHours: input.offsetsHours,
+        ...(offsetsChanged ? { cycleStart: Date.now(), pushedOffsetIndexes: [] } : {}),
+      };
+      setTasks(await api.updateTask(updated));
+      return;
+    }
+    setTasks(await api.addTask({ ...input, cycleHours: DEFAULT_CYCLE_HOURS }));
   }
 
   async function handleToggleDone(id: string) {
@@ -35,23 +55,33 @@ export function PushTaskPanel() {
 
   async function handleDelete(id: string) {
     const api = getElectronApi();
+    if (editing?.id === id) {
+      setEditing(null);
+    }
     setTasks(await api.deleteTask(id));
   }
 
-  function handleEditOffsets(_id: string) {
-    // TODO: mở dialog sửa giờ push — đủ phạm vi hiện tại là placeholder không thay đổi hành vi test.
+  function handleEdit(id: string) {
+    const task = tasks.find((t) => t.id === id);
+    if (task) {
+      setEditing({ id, name: task.name, offsetsHours: task.offsetsHours });
+    }
   }
 
   return (
-    <CollapsiblePanel title="Đầu việc cần push" defaultExpanded={true}>
+    <CollapsiblePanel
+      title="Đầu việc cần push"
+      badge={tasks.filter((t) => !t.done).length}
+      defaultExpanded={true}
+    >
       <PushTaskList
         tasks={tasks}
         now={now}
         onToggleDone={handleToggleDone}
         onDelete={handleDelete}
-        onEditOffsets={handleEditOffsets}
+        onEditOffsets={handleEdit}
       />
-      <PushTaskForm onSubmit={handleAdd} />
+      <PushTaskForm onSubmit={handleSubmit} editing={editing} onCancelEdit={() => setEditing(null)} />
     </CollapsiblePanel>
   );
 }

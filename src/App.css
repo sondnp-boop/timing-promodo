@@ -215,6 +215,28 @@ textarea:focus {
   cursor: pointer;
 }
 
+.collapsible-panel__badge {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--bg);
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.push-task-form__label {
+  margin-bottom: 4px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+.icon-btn--play {
+  color: #2ee66b;
+}
+
 .push-task-form {
   display: flex;
   gap: 8px;
@@ -248,8 +270,30 @@ textarea:focus {
   box-shadow: 0 0 18px rgba(29, 78, 216, 0.6);
 }
 
+.pomodoro-clock__display--work {
+  background: #89abe3;
+  box-shadow: 0 0 18px rgba(137, 171, 227, 0.5);
+}
+
+.pomodoro-clock__display--break {
+  background: #ea738d;
+  box-shadow: 0 0 18px rgba(234, 115, 141, 0.5);
+}
+
+.pomodoro-clock__display--work .pomodoro-clock__phase,
+.pomodoro-clock__display--work .pomodoro-clock__time {
+  color: #fff;
+  text-shadow: none;
+}
+
+.pomodoro-clock__display--break .pomodoro-clock__phase,
+.pomodoro-clock__display--break .pomodoro-clock__time {
+  color: #000;
+  text-shadow: none;
+}
+
 .pomodoro-clock__time {
-  font-size: 56px;
+  font-size: 68px;
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;

@@ -28,6 +28,20 @@ describe('PomodoroClock', () => {
     expect(screen.getByText('Đang nghỉ')).toBeInTheDocument();
   });
 
+  it('áp modifier màu theo pha: work / break / chưa chạy', () => {
+    const work = { phase: 'work' as const, phaseEndsAt: 90_000, running: true };
+    const { container, rerender } = render(<PomodoroClock state={work} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+    const display = () => container.querySelector('.pomodoro-clock__display')!;
+    expect(display()).toHaveClass('pomodoro-clock__display--work');
+
+    rerender(<PomodoroClock state={{ ...work, phase: 'break' }} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+    expect(display()).toHaveClass('pomodoro-clock__display--break');
+    expect(display()).not.toHaveClass('pomodoro-clock__display--work');
+
+    rerender(<PomodoroClock state={null} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+    expect(display().className).not.toMatch(/--(work|break)/);
+  });
+
   it('gọi onStop khi bấm Dừng', () => {
     const onStop = vi.fn();
     const state = { phase: 'work' as const, phaseEndsAt: 90_000, running: true };

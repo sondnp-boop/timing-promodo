@@ -21,6 +21,27 @@ describe('CollapsiblePanel', () => {
     expect(screen.queryByText('Nội dung B')).not.toBeInTheDocument();
   });
 
+  it('hiển thị badge cạnh tiêu đề khi có, kể cả 0; ẩn khi không truyền', () => {
+    const { rerender } = render(
+      <CollapsiblePanel title="P" defaultExpanded={false}>
+        <div />
+      </CollapsiblePanel>
+    );
+    expect(screen.queryByTestId('panel-badge')).not.toBeInTheDocument();
+    rerender(
+      <CollapsiblePanel title="P" badge={3} defaultExpanded={false}>
+        <div />
+      </CollapsiblePanel>
+    );
+    expect(screen.getByTestId('panel-badge')).toHaveTextContent('3');
+    rerender(
+      <CollapsiblePanel title="P" badge={0} defaultExpanded={false}>
+        <div />
+      </CollapsiblePanel>
+    );
+    expect(screen.getByTestId('panel-badge')).toHaveTextContent('0');
+  });
+
   it('click vào header toggle đúng trạng thái', () => {
     render(
       <CollapsiblePanel title="Panel C" defaultExpanded={false}>

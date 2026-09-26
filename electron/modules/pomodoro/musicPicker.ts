@@ -5,13 +5,16 @@ export function pickMusicLink(
   playlists: Playlists,
   random: () => number = Math.random
 ): string | null {
+  const custom = settings.customLink?.trim();
+  if (custom) {
+    return /^https?:\/\//i.test(custom) ? custom : null;
+  }
   if (settings.musicGenre === 'custom') {
-    return settings.customLink ?? null;
+    return null;
   }
   const list = playlists[settings.musicGenre];
   if (!list || list.length === 0) {
     return null;
   }
-  const index = Math.floor(random() * list.length);
-  return list[index];
+  return list[Math.floor(random() * list.length)];
 }
