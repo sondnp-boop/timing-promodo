@@ -50,7 +50,6 @@ describe('JsonStore', () => {
   const task = {
     id: 't1',
     name: 'Task A',
-    cycleHours: 24,
     offsetsHours: [3, 6, 9],
     cycleStart: 1000,
     pushedOffsetIndexes: [],

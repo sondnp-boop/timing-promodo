@@ -7,7 +7,6 @@ function makeTask(id: string, offsetHour: number): PushTask {
   return {
     id,
     name: `Task ${id}`,
-    cycleHours: 24,
     offsetsHours: [offsetHour],
     cycleStart: 0,
     pushedOffsetIndexes: [],
@@ -40,15 +39,16 @@ describe('PushTaskList', () => {
   });
 
   it('dòng đang nhấp nháy vẫn hiện dù nằm ngoài top 5; hết nhấp nháy thì bị ẩn lại', () => {
-    const tasks = [1, 2, 3, 4, 5, 6, 7].map((i) => makeTask(String(i), i));
+    const HOUR = 3_600_000;
+    // Task 1-6 có mốc rất xa (không nhấp nháy); chỉ task 7 sắp tới mốc.
+    const tasks = [1, 2, 3, 4, 5, 6, 7].map((i) => makeTask(String(i), i === 7 ? 7 : 100));
     const props = { tasks, onToggleDone: noop, onDelete: noop, onEditOffsets: noop };
-    const flashStarts = { '7': 1000 };
-    const { rerender } = render(<PushTaskList {...props} now={2000} flashStarts={flashStarts} />);
-    expect(screen.getByTestId('push-task-row-7')).toHaveClass('push-task-row--flash-white');
+    const { rerender } = render(<PushTaskList {...props} now={7 * HOUR - 5_000} />);
+    expect(screen.getByTestId('push-task-row-7')).toBeInTheDocument();
     expect(screen.queryByTestId('push-task-row-6')).not.toBeInTheDocument();
     expect(screen.getByText('Xem thêm 1 task')).toBeInTheDocument();
 
-    rerender(<PushTaskList {...props} now={11_000} flashStarts={flashStarts} />);
+    rerender(<PushTaskList {...props} now={0} />);
     expect(screen.queryByTestId('push-task-row-7')).not.toBeInTheDocument();
     expect(screen.getByText('Xem thêm 2 task')).toBeInTheDocument();
   });

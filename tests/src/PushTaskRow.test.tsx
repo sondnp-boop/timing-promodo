@@ -8,7 +8,6 @@ function makeTask(overrides: Partial<PushTask> = {}): PushTask {
   return {
     id: 't1',
     name: 'Task A',
-    cycleHours: 24,
     offsetsHours: [3, 6, 9],
     cycleStart: 0,
     pushedOffsetIndexes: [],
@@ -74,60 +73,79 @@ describe('PushTaskRow', () => {
     expect(top).toContainElement(screen.getByLabelText('Đánh dấu hoàn thành'));
   });
 
-  it('hiển thị "Còn x phút" khi < 1 giờ và "Còn x tiếng" khi >= 1 giờ', () => {
-    const task = makeTask({ offsetsHours: [3] });
-    const HOUR = 3_600_000;
-    const { rerender } = render(
-      <PushTaskRow task={task} now={2.5 * HOUR} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />
-    );
-    expect(screen.getByText('Còn 30 phút')).toBeInTheDocument();
-    rerender(<PushTaskRow task={task} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />);
-    expect(screen.getByText('Còn 3 tiếng')).toBeInTheDocument();
+  const HOUR = 3_600_000;
+  const renderAt = (task: PushTask, now: number) =>
+    render(<PushTaskRow task={task} now={now} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />);
+  const left = (el: HTMLElement) => parseFloat(el.style.left);
+
+  it('không còn dòng nhãn "Còn ..."', () => {
+    renderAt(makeTask(), 0);
+    expect(screen.queryByText(/^Còn /)).not.toBeInTheDocument();
+    expect(screen.queryByText('Đã hoàn tất chu kỳ')).not.toBeInTheDocument();
   });
 
-  it('nhấp nháy vàng/trắng mỗi giây trong 10 giây rồi về giao diện mặc định', () => {
-    const task = makeTask();
-    const testId = 'push-task-row-t1';
-    const renderAt = (now: number) =>
-      render(
-        <PushTaskRow
-          task={task}
-          now={now}
-          flashStartedAt={5000}
-          onToggleDone={vi.fn()}
-          onDelete={vi.fn()}
-          onEditOffsets={vi.fn()}
-        />
-      );
+  it('timeline chia theo các mốc đã setup: setup 1,2,3 -> 4 điểm 0,1,2,3', () => {
+    renderAt(makeTask({ offsetsHours: [1, 2, 3] }), 0);
+    const ticks = screen.getAllByTestId('tick-t1');
+    expect(ticks).toHaveLength(4);
+    expect(ticks.map((t) => Math.round(left(t)))).toEqual([0, 33, 67, 100]);
+    ['0', '1', '2', '3'].forEach((label) => expect(screen.getByText(label)).toBeInTheDocument());
+  });
 
+  it('chấm đỏ ở chính giữa đoạn 0-1 khi đã trôi 30 phút (setup 1,2,3)', () => {
+    renderAt(makeTask({ offsetsHours: [1, 2, 3] }), 0.5 * HOUR);
+    const dot = screen.getByTestId('dot-t1');
+    const oneHourTick = screen.getAllByTestId('tick-t1')[1];
+    expect(left(dot)).toBeCloseTo(left(oneHourTick) / 2, 5);
+  });
+
+  it('chấm đỏ di chuyển dần tới cuối thanh và dừng ở 100% khi quá mốc cuối', () => {
+    const task = makeTask({ offsetsHours: [1, 2, 3] });
+    const positions = [0, 1, 2, 3, 5].map((h) => {
+      const { unmount } = renderAt(task, h * HOUR);
+      const value = left(screen.getByTestId('dot-t1'));
+      unmount();
+      return value;
+    });
+    expect(positions[0]).toBe(0);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(positions[3]).toBe(100);
+    expect(positions[4]).toBe(100);
+  });
+
+  it('thanh chia theo tỉ lệ thời gian thật khi mốc không đều (1,5)', () => {
+    renderAt(makeTask({ offsetsHours: [1, 5] }), 0);
+    expect(screen.getAllByTestId('tick-t1').map((t) => left(t))).toEqual([0, 20, 100]);
+  });
+
+  it('nhấp nháy vàng/trắng trong 15 giây trước mỗi mốc rồi về mặc định', () => {
+    const task = makeTask({ offsetsHours: [1, 2] });
     const cases: [number, string | null][] = [
-      [5000, 'push-task-row--flash-yellow'],
-      [6000, 'push-task-row--flash-white'],
-      [7000, 'push-task-row--flash-yellow'],
-      [14_999, 'push-task-row--flash-white'],
-      [15_000, null],
+      [HOUR - 15_000, 'push-task-row--flash-yellow'],
+      [HOUR - 14_000, 'push-task-row--flash-white'],
+      [HOUR - 1, 'push-task-row--flash-yellow'],
+      [HOUR, null],
     ];
     for (const [now, cls] of cases) {
-      const { unmount } = renderAt(now);
-      const row = screen.getByTestId(testId);
-      if (cls) {
-        expect(row).toHaveClass(cls);
-      } else {
-        expect(row.className).toBe('push-task-row');
-      }
+      const { unmount } = renderAt(task, now);
+      const row = screen.getByTestId('push-task-row-t1');
+      if (cls) expect(row).toHaveClass(cls);
+      else expect(row.className).toBe('push-task-row');
       unmount();
     }
   });
 
-  it('không nhấp nháy khi không có flashStartedAt', () => {
-    render(<PushTaskRow task={makeTask()} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />);
+  it('hết chu kỳ setup thì nhấp nháy đỏ/xanh liên tục; done thì dừng', () => {
+    const task = makeTask({ offsetsHours: [1, 2, 3] });
+    const end = 3 * HOUR;
+    const first = renderAt(task, end);
+    expect(screen.getByTestId('push-task-row-t1')).toHaveClass('push-task-row--flash-red');
+    first.unmount();
+    const second = renderAt(task, end + 1000);
+    expect(screen.getByTestId('push-task-row-t1')).toHaveClass('push-task-row--flash-green');
+    second.unmount();
+    renderAt({ ...task, done: true }, end + 1000);
     expect(screen.getByTestId('push-task-row-t1').className).toBe('push-task-row');
-  });
-
-  it('hiển thị "Đã hoàn tất chu kỳ" khi đã push hết offset', () => {
-    const task = makeTask({ pushedOffsetIndexes: [0, 1, 2] });
-    render(<PushTaskRow task={task} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />);
-    expect(screen.getByText('Đã hoàn tất chu kỳ')).toBeInTheDocument();
   });
 });
 

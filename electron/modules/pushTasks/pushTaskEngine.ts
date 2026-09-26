@@ -19,7 +19,7 @@ export function nextPushTime(task: PushTask): number | null {
 
 /**
  * Kiểm tra và xử lý các đầu việc đã tới hạn push tại thời điểm `now`.
- * Trả về danh sách task đã cập nhật (đánh dấu offset đã push hoặc sang chu kỳ mới)
+ * Trả về danh sách task đã cập nhật (đánh dấu offset đã push; hết mốc cuối thì dừng, không tự lặp lại)
  * cùng danh sách id các task vừa được push (để bắn notification).
  */
 export function processDueTasks(tasks: PushTask[], now: number): { tasks: PushTask[]; pushedTaskIds: string[] } {
@@ -39,13 +39,6 @@ export function processDueTasks(tasks: PushTask[], now: number): { tasks: PushTa
         pushedOffsetIndexes: [...current.pushedOffsetIndexes, offsetIndex],
       };
       pushedTaskIds.push(current.id);
-      if (current.pushedOffsetIndexes.length >= current.offsetsHours.length) {
-        current = {
-          ...current,
-          cycleStart: current.cycleStart + current.cycleHours * HOUR_MS,
-          pushedOffsetIndexes: [],
-        };
-      }
       due = nextPushTime(current);
     }
     return current;

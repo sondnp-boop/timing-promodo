@@ -16,7 +16,6 @@ export interface Playlists {
 export interface PushTask {
   id: string;
   name: string;
-  cycleHours: number;
   offsetsHours: number[];
   cycleStart: number;
   pushedOffsetIndexes: number[];

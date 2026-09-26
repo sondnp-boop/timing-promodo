@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { PushTask } from '../../shared/types';
-import { flashPhase } from '../../shared/flash';
+import { rowAlert } from '../../shared/flash';
 import { PushTaskRow } from './PushTaskRow';
 
 interface PushTaskListProps {
   tasks: PushTask[];
   now: number;
-  flashStarts?: Record<string, number>;
   onToggleDone: (id: string) => void;
   onDelete: (id: string) => void;
   onEditOffsets: (id: string) => void;
@@ -17,7 +16,6 @@ const VISIBLE_LIMIT = 5;
 export function PushTaskList({
   tasks,
   now,
-  flashStarts = {},
   onToggleDone,
   onDelete,
   onEditOffsets,
@@ -29,7 +27,7 @@ export function PushTaskList({
   const visibleTasks =
     expanded || !hasMore
       ? tasks
-      : tasks.filter((task, index) => index < VISIBLE_LIMIT || flashPhase(flashStarts[task.id], now) !== null);
+      : tasks.filter((task, index) => index < VISIBLE_LIMIT || rowAlert(task, now) !== null);
   const hiddenCount = tasks.length - visibleTasks.length;
 
   return (
@@ -39,7 +37,6 @@ export function PushTaskList({
           key={task.id}
           task={task}
           now={now}
-          flashStartedAt={flashStarts[task.id]}
           onToggleDone={onToggleDone}
           onDelete={onDelete}
           onEditOffsets={onEditOffsets}

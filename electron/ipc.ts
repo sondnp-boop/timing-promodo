@@ -43,7 +43,6 @@ export function registerIpcHandlers(store: JsonStore, getWindow: () => BrowserWi
     }
     persist();
     getWindow()?.webContents.send('tasks:updated', sortByNextPush(data.pushTasks));
-    getWindow()?.webContents.send('tasks:pushed', [...new Set(pushedTaskIds)]);
   }
 
   setInterval(() => {

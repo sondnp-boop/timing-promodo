@@ -67,14 +67,18 @@ describe('PomodoroPanel', () => {
     expect(await screen.findByText('Start')).toBeInTheDocument();
   });
 
-  it('nút Start/Stop đứng đầu dòng điều khiển, trước ô giờ, URL, Play', async () => {
+  it('thứ tự dòng điều khiển: ô giờ làm/nghỉ, nút Start/Stop, URL, Play', async () => {
     await renderOpenPanel();
     const row = document.querySelector('.pomodoro-controls')!;
+    const time = screen.getByLabelText('Thời gian làm/nghỉ (phút)');
     const toggle = screen.getByText('Start');
-    expect(row).toContainElement(toggle);
-    expect(toggle.compareDocumentPosition(screen.getByLabelText('Thời gian làm/nghỉ (phút)'))).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING
-    );
+    const url = screen.getByLabelText('Link nhạc');
+    const play = screen.getByLabelText('Phát nhạc');
+    [time, toggle, url, play].forEach((el) => expect(row).toContainElement(el));
+    const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(time, toggle)).toBe(true);
+    expect(before(toggle, url)).toBe(true);
+    expect(before(url, play)).toBe(true);
   });
 
   it('chỉ bấm Play mới gọi playMusic', async () => {

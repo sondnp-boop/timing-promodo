@@ -8,7 +8,6 @@ function makeTask(overrides: Partial<PushTask> = {}): PushTask {
   return {
     id: 'task-1',
     name: 'Task A',
-    cycleHours: 24,
     offsetsHours: [3, 6, 9],
     cycleStart: 0,
     pushedOffsetIndexes: [],
@@ -51,11 +50,14 @@ describe('pushTaskEngine', () => {
       expect(tasks[0].pushedOffsetIndexes).toEqual([]);
     });
 
-    it('sang chu kỳ mới khi push hết các offset', () => {
-      const task = makeTask({ cycleStart: 0, cycleHours: 24, offsetsHours: [1] });
+    it('hết mốc cuối thì dừng: đánh dấu đã push hết, không tự sang chu kỳ mới', () => {
+      const task = makeTask({ cycleStart: 0, offsetsHours: [1] });
       const { tasks } = processDueTasks([task], 1 * HOUR);
-      expect(tasks[0].cycleStart).toBe(24 * HOUR);
-      expect(tasks[0].pushedOffsetIndexes).toEqual([]);
+      expect(tasks[0].cycleStart).toBe(0);
+      expect(tasks[0].pushedOffsetIndexes).toEqual([0]);
+      expect(nextPushTime(tasks[0])).toBeNull();
+      const again = processDueTasks(tasks, 100 * HOUR);
+      expect(again.pushedTaskIds).toEqual([]);
     });
 
     it('bỏ qua task đã done', () => {
@@ -69,7 +71,8 @@ describe('pushTaskEngine', () => {
       const task = makeTask({ cycleStart: 0, offsetsHours: [1, 2, 3] });
       const { tasks, pushedTaskIds } = processDueTasks([task], 5 * HOUR);
       expect(pushedTaskIds).toEqual(['task-1', 'task-1', 'task-1']);
-      expect(tasks[0].cycleStart).toBe(24 * HOUR);
+      expect(tasks[0].cycleStart).toBe(0);
+      expect(tasks[0].pushedOffsetIndexes).toEqual([0, 1, 2]);
     });
   });
 

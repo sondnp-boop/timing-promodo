@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PushTaskPanel } from '../../src/features/pushTasks/PushTaskPanel';
 import { PushTask } from '../../src/shared/types';
 
@@ -7,7 +7,6 @@ function makeTask(id: string, overrides: Partial<PushTask> = {}): PushTask {
   return {
     id,
     name: `Task ${id}`,
-    cycleHours: 24,
     offsetsHours: [3, 6, 9],
     cycleStart: 1000,
     pushedOffsetIndexes: [1],
@@ -23,7 +22,6 @@ async function renderPanel(tasks: PushTask[]) {
   api = {
     listTasks: vi.fn().mockResolvedValue(tasks),
     onTasksUpdated: vi.fn().mockReturnValue(() => {}),
-    onTasksPushed: vi.fn().mockReturnValue(() => {}),
     addTask: vi.fn().mockResolvedValue(tasks),
     updateTask: vi.fn().mockResolvedValue(tasks),
     markTaskDone: vi.fn().mockResolvedValue(tasks),
@@ -46,30 +44,15 @@ describe('PushTaskPanel', () => {
     expect(nameInput.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('khi tới hạn push (sự kiện tasks:pushed) dòng nhấp nháy 10 giây rồi về mặc định', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    try {
-      await renderPanel([makeTask('1'), makeTask('2')]);
-      const pushedCb = api.onTasksPushed.mock.calls[0][0] as (ids: string[]) => void;
-      const row1 = () => screen.getByTestId('push-task-row-1');
-
-      expect(row1().className).toBe('push-task-row');
-      act(() => pushedCb(['1']));
-      expect(row1().className).toMatch(/push-task-row--flash-yellow/);
-      expect(screen.getByTestId('push-task-row-2').className).toBe('push-task-row');
-
-      await act(async () => {
-        vi.advanceTimersByTime(2500);
-      });
-      expect(row1().className).toMatch(/push-task-row--flash-white/);
-
-      await act(async () => {
-        vi.advanceTimersByTime(10_000);
-      });
-      expect(row1().className).toBe('push-task-row');
-    } finally {
-      vi.useRealTimers();
-    }
+  it('task đã hết chu kỳ setup nhấp nháy đỏ/xanh; task done hoặc còn xa thì không', async () => {
+    const HOUR = 3_600_000;
+    const expired = makeTask('1', { offsetsHours: [1], cycleStart: Date.now() - 2 * HOUR });
+    const doneExpired = makeTask('2', { offsetsHours: [1], cycleStart: Date.now() - 2 * HOUR, done: true });
+    const fresh = makeTask('3', { offsetsHours: [1], cycleStart: Date.now() });
+    await renderPanel([expired, doneExpired, fresh]);
+    expect(screen.getByTestId('push-task-row-1').className).toMatch(/push-task-row--flash-(red|green)/);
+    expect(screen.getByTestId('push-task-row-2').className).toBe('push-task-row');
+    expect(screen.getByTestId('push-task-row-3').className).toBe('push-task-row');
   });
 
   it('badge hiển thị số việc chưa xong', async () => {
@@ -114,7 +97,7 @@ describe('PushTaskPanel', () => {
     fireEvent.change(screen.getByLabelText('Tên đầu việc'), { target: { value: 'New' } });
     fireEvent.keyDown(screen.getByLabelText('Tên đầu việc'), { key: 'Enter' });
     await waitFor(() =>
-      expect(api.addTask).toHaveBeenCalledWith({ name: 'New', offsetsHours: [3, 6, 9], cycleHours: 24 })
+      expect(api.addTask).toHaveBeenCalledWith({ name: 'New', offsetsHours: [3, 6, 9] })
     );
     expect(api.updateTask).not.toHaveBeenCalled();
   });
