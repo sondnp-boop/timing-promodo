@@ -327,11 +327,21 @@ textarea:focus {
   width: 100%;
 }
 
-.music-settings {
-  display: flex;
+.pomodoro-controls {
+  display: grid;
+  grid-template-columns: 2fr 9fr 1fr;
   gap: 8px;
+  align-items: center;
+}
+
+.music-settings {
+  display: contents;
 }
 
 .music-settings input {
-  flex: 1;
+  width: 100%;
+}
+
+.music-settings .icon-btn {
+  justify-self: center;
 }

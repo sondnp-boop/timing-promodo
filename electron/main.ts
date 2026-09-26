@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { JsonStore } from './store/jsonStore';
 import { registerIpcHandlers } from './ipc';
 
-const WINDOW_WIDTH = 360;
+const WINDOW_WIDTH = 480;
 const WINDOW_HEIGHT = 560;
 const MARGIN = 16;
 

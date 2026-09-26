@@ -27,6 +27,17 @@ describe('PomodoroPanel', () => {
     vi.restoreAllMocks();
   });
 
+  it('ô giờ làm/nghỉ, ô URL và nút Play cùng một dòng theo thứ tự', async () => {
+    await renderOpenPanel();
+    const row = document.querySelector('.pomodoro-controls')!;
+    const time = screen.getByLabelText('Thời gian làm/nghỉ (phút)');
+    const url = screen.getByLabelText('Link nhạc');
+    const play = screen.getByLabelText('Phát nhạc');
+    [time, url, play].forEach((el) => expect(row).toContainElement(el));
+    expect(time.compareDocumentPosition(url) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(url.compareDocumentPosition(play) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('Enter trong ô làm/nghỉ bắt đầu chạy pha làm việc', async () => {
     await renderOpenPanel();
     fireEvent.keyDown(screen.getByLabelText('Thời gian làm/nghỉ (phút)'), { key: 'Enter' });

@@ -37,6 +37,13 @@ describe('App', () => {
     expect(screen.getByPlaceholderText('Tên đầu việc')).toBeInTheDocument();
   });
 
+  it('khung Đồng hồ Pomodoro nằm trên khung Đầu việc cần push', async () => {
+    render(<App />);
+    const pomodoro = await screen.findByText('Đồng hồ Pomodoro');
+    const push = screen.getByText('Đầu việc cần push');
+    expect(pomodoro.compareDocumentPosition(push) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('khung Đồng hồ Pomodoro thu gọn (collapsed) khi mount lần đầu', async () => {
     render(<App />);
     expect(await screen.findByText('Đồng hồ Pomodoro')).toBeInTheDocument();

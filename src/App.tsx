@@ -7,8 +7,8 @@ export function App() {
   return (
     <div className="app">
       <TitleBar />
-      <PushTaskPanel />
       <PomodoroPanel />
+      <PushTaskPanel />
     </div>
   );
 }
