@@ -17,6 +17,7 @@ export function PushTaskPanel() {
   const [editing, setEditing] = useState<EditingTask | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PushTask | null>(null);
   const [showExport, setShowExport] = useState(false);
+  const [showReset, setShowReset] = useState(false);
 
   useEffect(() => {
     const api = getElectronApi();
@@ -74,6 +75,11 @@ export function PushTaskPanel() {
     setTasks(await getElectronApi().deleteTask(task.id));
   }
 
+  async function confirmReset() {
+    setShowReset(false);
+    setTasks(await getElectronApi().resetTasksStart());
+  }
+
   function handleEdit(id: string) {
     const task = tasks.find((t) => t.id === id);
     if (task) {
@@ -87,9 +93,19 @@ export function PushTaskPanel() {
         title="Đầu việc cần push"
         badge={tasks.filter((t) => !t.done).length}
         headerExtra={
-          <button type="button" className="panel-export-btn" onClick={() => setShowExport(true)}>
-            Export
-          </button>
+          <>
+            <button type="button" className="panel-action-btn" onClick={() => setShowExport(true)}>
+              Export
+            </button>
+            <button
+              type="button"
+              className="panel-action-btn"
+              disabled={tasks.length === 0}
+              onClick={() => setShowReset(true)}
+            >
+              Reset
+            </button>
+          </>
         }
         defaultExpanded={true}
       >
@@ -110,7 +126,15 @@ export function PushTaskPanel() {
           onCancel={() => setPendingDelete(null)}
         />
       )}
-      {showExport && <ExportDialog tasks={tasks} now={now} onClose={() => setShowExport(false)} />}
+      {showReset && (
+        <ConfirmDialog
+          message="Bạn có muốn đặt lại giờ khởi tạo các đầu việc?"
+          confirmLabel="Đặt lại"
+          onConfirm={confirmReset}
+          onCancel={() => setShowReset(false)}
+        />
+      )}
+      {showExport &&<ExportDialog tasks={tasks} now={now} onClose={() => setShowExport(false)} />}
     </>
   );
 }

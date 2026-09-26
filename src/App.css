@@ -431,10 +431,12 @@ textarea:focus {
 }
 
 .collapsible-panel__extra {
+  display: inline-flex;
+  gap: 6px;
   margin-left: 8px;
 }
 
-.panel-export-btn {
+.panel-action-btn {
   padding: 1px 10px;
   font-size: 11px;
   color: var(--cyan);
@@ -444,7 +446,12 @@ textarea:focus {
   cursor: pointer;
 }
 
-.panel-export-btn:hover {
+.panel-action-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.panel-action-btn:hover:not(:disabled) {
   box-shadow: 0 0 8px var(--cyan);
 }
 

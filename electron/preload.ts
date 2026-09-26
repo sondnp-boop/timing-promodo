@@ -26,6 +26,7 @@ const electronAPI = {
   updateTask: (task: PushTask): Promise<PushTask[]> => ipcRenderer.invoke('tasks:update', task),
   markTaskDone: (id: string): Promise<PushTask[]> => ipcRenderer.invoke('tasks:markDone', id),
   deleteTask: (id: string): Promise<PushTask[]> => ipcRenderer.invoke('tasks:delete', id),
+  resetTasksStart: (): Promise<PushTask[]> => ipcRenderer.invoke('tasks:resetStart'),
   onTasksUpdated: (callback: (tasks: PushTask[]) => void) => {
     const listener = (_e: unknown, tasks: PushTask[]) => callback(tasks);
     ipcRenderer.on('tasks:updated', listener);

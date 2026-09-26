@@ -46,6 +46,11 @@ export function processDueTasks(tasks: PushTask[], now: number): { tasks: PushTa
   return { tasks: updated, pushedTaskIds };
 }
 
+/** Đặt lại giờ khởi tạo của toàn bộ task (kể cả đã done) về `now`, xóa các mốc đã push. */
+export function resetTasksStart(tasks: PushTask[], now: number): PushTask[] {
+  return tasks.map((task) => ({ ...task, cycleStart: now, pushedOffsetIndexes: [] }));
+}
+
 /** Task đang làm sắp xếp theo mốc push gần nhất; task đã done luôn nằm dưới cùng. */
 export function sortByNextPush(tasks: PushTask[]): PushTask[] {
   return [...tasks].sort((a, b) => {

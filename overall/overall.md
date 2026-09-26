@@ -94,7 +94,7 @@ PushTask { id, name, offsetsHours: number[], cycleStart (epoch ms), pushedOffset
 | `clipboard:write` | invoke | copy text (qua main vì preload sandbox không có clipboard) |
 | `pomodoro:updateSettings` / `start`(phase) / `stop` / `getState` / `playMusic` | invoke | điều khiển Pomodoro; `playMusic` mở link bằng `shell.openExternal` |
 | `pomodoro:stateChanged` | main→renderer | khi tự chuyển pha |
-| `tasks:list` / `add` / `update` / `markDone`(toggle) / `delete` | invoke | CRUD, luôn trả danh sách đã `sortByNextPush` |
+| `tasks:list` / `add` / `update` / `markDone`(toggle) / `delete` / `resetStart` | invoke | CRUD, luôn trả danh sách đã `sortByNextPush` |
 | `tasks:updated` | main→renderer | sau khi tick đánh dấu push |
 
 Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.ts` (và stub `window.electronAPI` trong test liên quan).
@@ -111,6 +111,7 @@ Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.t
 - **Xóa**: hiện `ConfirmDialog` trong app (KHÔNG dùng `window.confirm` — trên Electron nó làm mất focus ô nhập). Đồng ý mới gọi `tasks:delete`.
 - **Done** (icon check) là toggle; done → gạch ngang, không nhấp nháy, không bắn push.
 - Badge cạnh tiêu đề = số task chưa done. Nút **Export** cạnh badge (nằm trong `headerExtra`, chặn nổi bọt để không đóng/mở panel).
+- Nút **Reset** (cạnh Export, khóa khi danh sách rỗng): hiện `ConfirmDialog` "Bạn có muốn đặt lại giờ khởi tạo các đầu việc?"; đồng ý → IPC `tasks:resetStart` (`resetTasksStart` trong `pushTaskEngine`) đặt `cycleStart = now` và `pushedOffsetIndexes = []` cho **toàn bộ** task (kể cả đã Done; cờ `done` giữ nguyên) → chấm đỏ về 0, nhấp nháy/báo hết hạn được tính lại từ đầu.
 
 ### 7.2 Timeline (PushTaskRow)
 - Điểm: `0` + các mốc (sắp xếp tăng dần); vị trí = `giờ / mốc_cuối * 100%` (tỉ lệ thời gian thật, không chia đều). Phần tô = màu task (`colorForIndex(colorIndex)`, 8 màu lặp) đến chấm đỏ; chấm đỏ = `(now - cycleStart)/mốc_cuối`, kẹp 0..100%.
@@ -149,7 +150,7 @@ Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.t
 ## 9. Test
 
 - Vitest, môi trường jsdom, globals bật, setup `tests/setupTests.ts`. Chạy 1 file: `npx vitest run tests/src/PushTaskRow.test.tsx`.
-- Hiện ~160 test, 22 file. Component test stub `window.electronAPI = {...}` (chỉ cần khai báo hàm được gọi).
+- Hiện ~166 test, 22 file. Component test stub `window.electronAPI = {...}` (chỉ cần khai báo hàm được gọi).
 - jsdom **không có layout/CSS file** → quy tắc CSS quan trọng (sticky, tỉ lệ cột 2/2/6/2, có class màu nhấp nháy) được kiểm bằng cách đọc thẳng text `src/App.css` (`tests/src/appCss.test.ts`). Sửa các rule này thì sửa test tương ứng.
 - Mock `scrollHeight` bằng `Object.defineProperty` trên `HTMLTextAreaElement.prototype` (không dùng `vi.spyOn` getter — gây đệ quy vô hạn), nhớ `delete` sau test.
 - Test theo thời gian: truyền `now` cố định vào component/hàm thuần thay vì fake timers. Test tích hợp Panel dùng `Date.now()` thật, chỉ assert regex lớp `flash-(red|green)` vì màu phụ thuộc giây chẵn/lẻ.
@@ -174,6 +175,7 @@ Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.t
 7. `feature_export_confirm_units` – nhãn phút/tiếng, tooltip, xác nhận xóa, Export.
 8. `feature_overall_doc` – file này.
 9. `feature_done_bottom_clear_form` – task Done xuống cuối danh sách; form thêm/sửa xóa trắng cả 2 ô sau Enter (và trống khi mở app).
+10. `feature_reset_button` – nút Reset đặt lại giờ khởi tạo toàn bộ đầu việc (có xác nhận).
 
 (Các branch chưa được merge vào một nhánh chính; mỗi branch tách từ branch trước.)
 

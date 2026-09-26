@@ -3,7 +3,7 @@ import { JsonStore } from './store/jsonStore';
 import { AppData, PomodoroSettings, PushTask } from './store/schema';
 import { PomodoroState, WARNING_SECONDS, dueWarning, startPhase, tick } from './modules/pomodoro/pomodoroEngine';
 import { pickMusicLink } from './modules/pomodoro/musicPicker';
-import { processDueTasks, sortByNextPush } from './modules/pushTasks/pushTaskEngine';
+import { processDueTasks, resetTasksStart, sortByNextPush } from './modules/pushTasks/pushTaskEngine';
 import { pruneHistory } from './modules/pushTasks/historyPruner';
 import { showNotification } from './notifications';
 
@@ -138,6 +138,12 @@ export function registerIpcHandlers(store: JsonStore, getWindow: () => BrowserWi
       ...data,
       pushTasks: data.pushTasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
     };
+    persist();
+    return sortByNextPush(data.pushTasks);
+  });
+
+  ipcMain.handle('tasks:resetStart', () => {
+    data = { ...data, pushTasks: resetTasksStart(data.pushTasks, Date.now()) };
     persist();
     return sortByNextPush(data.pushTasks);
   });

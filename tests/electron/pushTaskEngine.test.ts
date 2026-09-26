@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextPushTime, processDueTasks, sortByNextPush } from '../../electron/modules/pushTasks/pushTaskEngine';
+import { nextPushTime, processDueTasks, resetTasksStart, sortByNextPush } from '../../electron/modules/pushTasks/pushTaskEngine';
 import { PushTask } from '../../electron/store/schema';
 
 const HOUR = 3_600_000;
@@ -73,6 +73,34 @@ describe('pushTaskEngine', () => {
       expect(pushedTaskIds).toEqual(['task-1', 'task-1', 'task-1']);
       expect(tasks[0].cycleStart).toBe(0);
       expect(tasks[0].pushedOffsetIndexes).toEqual([0, 1, 2]);
+    });
+  });
+
+  describe('resetTasksStart', () => {
+    it('đặt lại cycleStart của toàn bộ task (kể cả done) về now và xóa mốc đã push', () => {
+      const tasks = [
+        makeTask({ id: 'a', cycleStart: 100, pushedOffsetIndexes: [0, 1] }),
+        makeTask({ id: 'b', cycleStart: 200, done: true, pushedOffsetIndexes: [0, 1, 2] }),
+      ];
+      const result = resetTasksStart(tasks, 5000);
+      expect(result.map((t) => t.cycleStart)).toEqual([5000, 5000]);
+      expect(result.map((t) => t.pushedOffsetIndexes)).toEqual([[], []]);
+    });
+
+    it('giữ nguyên các trường khác và không sửa mảng gốc', () => {
+      const original = makeTask({ id: 'a', name: 'Việc A', offsetsHours: [1, 2], done: true, colorIndex: 3 });
+      const [reset] = resetTasksStart([original], 5000);
+      expect(reset).toEqual({ ...original, cycleStart: 5000, pushedOffsetIndexes: [] });
+      expect(original.cycleStart).toBe(0);
+    });
+
+    it('sau khi reset, mốc push đầu tiên tính lại từ giờ mới', () => {
+      const [reset] = resetTasksStart([makeTask({ offsetsHours: [1, 2], cycleStart: 0 })], 10 * HOUR);
+      expect(nextPushTime(reset)).toBe(11 * HOUR);
+    });
+
+    it('danh sách rỗng trả về rỗng', () => {
+      expect(resetTasksStart([], 1)).toEqual([]);
     });
   });
 

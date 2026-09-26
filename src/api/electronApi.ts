@@ -17,6 +17,7 @@ interface ElectronAPI {
   updateTask(task: PushTask): Promise<PushTask[]>;
   markTaskDone(id: string): Promise<PushTask[]>;
   deleteTask(id: string): Promise<PushTask[]>;
+  resetTasksStart(): Promise<PushTask[]>;
   onTasksUpdated(callback: (tasks: PushTask[]) => void): () => void;
 }
 

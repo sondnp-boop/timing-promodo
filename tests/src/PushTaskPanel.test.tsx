@@ -27,6 +27,7 @@ async function renderPanel(tasks: PushTask[]) {
     markTaskDone: vi.fn().mockResolvedValue(tasks),
     deleteTask: vi.fn().mockResolvedValue([]),
     copyToClipboard: vi.fn().mockResolvedValue(undefined),
+    resetTasksStart: vi.fn().mockResolvedValue([]),
   };
   (window as any).electronAPI = api;
   render(<PushTaskPanel />);
@@ -156,6 +157,55 @@ describe('PushTaskPanel', () => {
     await waitFor(() => expect(api.deleteTask).toHaveBeenCalledWith('1'));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await waitFor(() => expect(screen.queryByTestId('push-task-row-1')).not.toBeInTheDocument());
+  });
+
+  it('nút Reset nằm cạnh nút Export; bấm hiện hộp xác nhận, chưa reset ngay', async () => {
+    await renderPanel([makeTask('1')]);
+    const reset = screen.getByText('Reset');
+    const exportBtn = screen.getByText('Export');
+    expect(exportBtn.parentElement).toBe(reset.parentElement);
+    expect(exportBtn.compareDocumentPosition(reset) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByTestId('push-task-row-1')).toBeInTheDocument();
+
+    fireEvent.click(reset);
+    const dialog = screen.getByRole('dialog', { name: 'Xác nhận' });
+    expect(within(dialog).getByText('Bạn có muốn đặt lại giờ khởi tạo các đầu việc?')).toBeInTheDocument();
+    expect(api.resetTasksStart).not.toHaveBeenCalled();
+    expect(screen.getByTestId('push-task-row-1')).toBeInTheDocument();
+  });
+
+  it('Hủy hộp xác nhận Reset thì không đặt lại', async () => {
+    await renderPanel([makeTask('1')]);
+    fireEvent.click(screen.getByText('Reset'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByText('Hủy'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(api.resetTasksStart).not.toHaveBeenCalled();
+  });
+
+  it('xác nhận Reset gọi resetTasksStart và hiển thị danh sách đã đặt lại', async () => {
+    const before = makeTask('1', { offsetsHours: [1], cycleStart: Date.now() - 2 * 3_600_000 });
+    await renderPanel([before]);
+    expect(screen.getByTestId('push-task-row-1').className).toMatch(/flash-(red|green)/);
+
+    api.resetTasksStart.mockResolvedValue([{ ...before, cycleStart: Date.now(), pushedOffsetIndexes: [] }]);
+    fireEvent.click(screen.getByText('Reset'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByText('Đặt lại'));
+
+    await waitFor(() => expect(api.resetTasksStart).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('push-task-row-1').className).toBe('push-task-row'));
+  });
+
+  it('nút Reset bị khóa khi danh sách rỗng và bấm Reset không đóng/mở panel', async () => {
+    api = {
+      listTasks: vi.fn().mockResolvedValue([]),
+      onTasksUpdated: vi.fn().mockReturnValue(() => {}),
+    };
+    (window as any).electronAPI = api;
+    render(<PushTaskPanel />);
+    await waitFor(() => expect(api.listTasks).toHaveBeenCalled());
+    expect(screen.getByText('Reset')).toBeDisabled();
+    expect(screen.getByLabelText('Tên đầu việc')).toBeInTheDocument();
   });
 
   it('nút Export cạnh badge mở popup danh sách (done trước) và không đóng panel', async () => {
