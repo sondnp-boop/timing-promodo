@@ -15,14 +15,21 @@ export function PushTaskPanel() {
   const [tasks, setTasks] = useState<PushTask[]>([]);
   const [now, setNow] = useState(Date.now());
   const [editing, setEditing] = useState<EditingTask | null>(null);
+  const [flashStarts, setFlashStarts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const api = getElectronApi();
     api.listTasks().then(setTasks);
     const unsubscribe = api.onTasksUpdated(setTasks);
+    const unsubscribePushed = api.onTasksPushed((ids) => {
+      const startedAt = Date.now();
+      setNow(startedAt);
+      setFlashStarts((prev) => ({ ...prev, ...Object.fromEntries(ids.map((id) => [id, startedAt])) }));
+    });
     const clockId = setInterval(() => setNow(Date.now()), 1000);
     return () => {
       unsubscribe();
+      unsubscribePushed();
       clearInterval(clockId);
     };
   }, []);
@@ -74,14 +81,15 @@ export function PushTaskPanel() {
       badge={tasks.filter((t) => !t.done).length}
       defaultExpanded={true}
     >
+      <PushTaskForm onSubmit={handleSubmit} editing={editing} onCancelEdit={() => setEditing(null)} />
       <PushTaskList
         tasks={tasks}
         now={now}
+        flashStarts={flashStarts}
         onToggleDone={handleToggleDone}
         onDelete={handleDelete}
         onEditOffsets={handleEdit}
       />
-      <PushTaskForm onSubmit={handleSubmit} editing={editing} onCancelEdit={() => setEditing(null)} />
     </CollapsiblePanel>
   );
 }

@@ -85,6 +85,45 @@ describe('PushTaskRow', () => {
     expect(screen.getByText('Còn 3 tiếng')).toBeInTheDocument();
   });
 
+  it('nhấp nháy vàng/trắng mỗi giây trong 10 giây rồi về giao diện mặc định', () => {
+    const task = makeTask();
+    const testId = 'push-task-row-t1';
+    const renderAt = (now: number) =>
+      render(
+        <PushTaskRow
+          task={task}
+          now={now}
+          flashStartedAt={5000}
+          onToggleDone={vi.fn()}
+          onDelete={vi.fn()}
+          onEditOffsets={vi.fn()}
+        />
+      );
+
+    const cases: [number, string | null][] = [
+      [5000, 'push-task-row--flash-yellow'],
+      [6000, 'push-task-row--flash-white'],
+      [7000, 'push-task-row--flash-yellow'],
+      [14_999, 'push-task-row--flash-white'],
+      [15_000, null],
+    ];
+    for (const [now, cls] of cases) {
+      const { unmount } = renderAt(now);
+      const row = screen.getByTestId(testId);
+      if (cls) {
+        expect(row).toHaveClass(cls);
+      } else {
+        expect(row.className).toBe('push-task-row');
+      }
+      unmount();
+    }
+  });
+
+  it('không nhấp nháy khi không có flashStartedAt', () => {
+    render(<PushTaskRow task={makeTask()} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />);
+    expect(screen.getByTestId('push-task-row-t1').className).toBe('push-task-row');
+  });
+
   it('hiển thị "Đã hoàn tất chu kỳ" khi đã push hết offset', () => {
     const task = makeTask({ pushedOffsetIndexes: [0, 1, 2] });
     render(<PushTaskRow task={task} now={0} onToggleDone={vi.fn()} onDelete={vi.fn()} onEditOffsets={vi.fn()} />);

@@ -39,6 +39,20 @@ describe('PushTaskList', () => {
     expect(screen.getByText('Xem thêm 2 task')).toBeInTheDocument();
   });
 
+  it('dòng đang nhấp nháy vẫn hiện dù nằm ngoài top 5; hết nhấp nháy thì bị ẩn lại', () => {
+    const tasks = [1, 2, 3, 4, 5, 6, 7].map((i) => makeTask(String(i), i));
+    const props = { tasks, onToggleDone: noop, onDelete: noop, onEditOffsets: noop };
+    const flashStarts = { '7': 1000 };
+    const { rerender } = render(<PushTaskList {...props} now={2000} flashStarts={flashStarts} />);
+    expect(screen.getByTestId('push-task-row-7')).toHaveClass('push-task-row--flash-white');
+    expect(screen.queryByTestId('push-task-row-6')).not.toBeInTheDocument();
+    expect(screen.getByText('Xem thêm 1 task')).toBeInTheDocument();
+
+    rerender(<PushTaskList {...props} now={11_000} flashStarts={flashStarts} />);
+    expect(screen.queryByTestId('push-task-row-7')).not.toBeInTheDocument();
+    expect(screen.getByText('Xem thêm 2 task')).toBeInTheDocument();
+  });
+
   it('click "Xem thêm" hiện toàn bộ danh sách', () => {
     const tasks = [1, 2, 3, 4, 5, 6, 7].map((i) => makeTask(String(i), i));
     render(<PushTaskList tasks={tasks} now={0} onToggleDone={noop} onDelete={noop} onEditOffsets={noop} />);

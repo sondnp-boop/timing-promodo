@@ -46,6 +46,20 @@ function createTray(): void {
   });
 }
 
+// Hai bản app cùng ghi 1 file dữ liệu sẽ đè mất task của nhau, nên chỉ cho chạy 1 bản.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.focus();
+  }
+});
+
 app.whenReady().then(() => {
   const store = new JsonStore(app.getPath('userData'));
   createWindow();

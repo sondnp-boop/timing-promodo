@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { PushTaskPanel } from '../../src/features/pushTasks/PushTaskPanel';
 import { PushTask } from '../../src/shared/types';
 
@@ -23,6 +23,7 @@ async function renderPanel(tasks: PushTask[]) {
   api = {
     listTasks: vi.fn().mockResolvedValue(tasks),
     onTasksUpdated: vi.fn().mockReturnValue(() => {}),
+    onTasksPushed: vi.fn().mockReturnValue(() => {}),
     addTask: vi.fn().mockResolvedValue(tasks),
     updateTask: vi.fn().mockResolvedValue(tasks),
     markTaskDone: vi.fn().mockResolvedValue(tasks),
@@ -36,6 +37,39 @@ async function renderPanel(tasks: PushTask[]) {
 describe('PushTaskPanel', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('ô tên đầu việc nằm trên danh sách task', async () => {
+    await renderPanel([makeTask('1')]);
+    const nameInput = screen.getByLabelText('Tên đầu việc');
+    const row = screen.getByTestId('push-task-row-1');
+    expect(nameInput.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('khi tới hạn push (sự kiện tasks:pushed) dòng nhấp nháy 10 giây rồi về mặc định', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      await renderPanel([makeTask('1'), makeTask('2')]);
+      const pushedCb = api.onTasksPushed.mock.calls[0][0] as (ids: string[]) => void;
+      const row1 = () => screen.getByTestId('push-task-row-1');
+
+      expect(row1().className).toBe('push-task-row');
+      act(() => pushedCb(['1']));
+      expect(row1().className).toMatch(/push-task-row--flash-yellow/);
+      expect(screen.getByTestId('push-task-row-2').className).toBe('push-task-row');
+
+      await act(async () => {
+        vi.advanceTimersByTime(2500);
+      });
+      expect(row1().className).toMatch(/push-task-row--flash-white/);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10_000);
+      });
+      expect(row1().className).toBe('push-task-row');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('badge hiển thị số việc chưa xong', async () => {

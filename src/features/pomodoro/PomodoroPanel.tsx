@@ -47,8 +47,15 @@ export function PomodoroPanel() {
 
   return (
     <CollapsiblePanel title="Đồng hồ Pomodoro" defaultExpanded={false}>
-      <PomodoroClock state={state} now={now} onStart={handleStart} onStop={handleStop} />
+      <PomodoroClock state={state} now={now} />
       <div className="pomodoro-controls">
+        <button
+          type="button"
+          className="pomodoro-controls__toggle"
+          onClick={() => (state ? handleStop() : handleStart('work'))}
+        >
+          {state ? 'Stop' : 'Start'}
+        </button>
         <PomodoroSettingsPanel
           settings={settings}
           onChange={handleSettingsChange}

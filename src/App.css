@@ -309,17 +309,18 @@ textarea:focus {
   text-transform: uppercase;
 }
 
-.pomodoro-clock__btn {
-  padding: 5px 14px;
-  font-size: 12px;
+.pomodoro-controls__toggle {
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--cyan);
   background: transparent;
   border: 1px solid var(--cyan);
-  border-radius: 999px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-.pomodoro-clock__btn:hover {
+.pomodoro-controls__toggle:hover {
   box-shadow: 0 0 10px var(--cyan);
 }
 
@@ -329,7 +330,7 @@ textarea:focus {
 
 .pomodoro-controls {
   display: grid;
-  grid-template-columns: 2fr 9fr 1fr;
+  grid-template-columns: 2fr 2fr 6fr 2fr;
   gap: 8px;
   align-items: center;
 }
@@ -344,4 +345,25 @@ textarea:focus {
 
 .music-settings .icon-btn {
   justify-self: center;
+}
+
+.push-task-row--flash-yellow,
+.push-task-row--flash-white {
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 8px;
+  color: #111;
+}
+
+.push-task-row--flash-yellow {
+  background: #ffe14d;
+}
+
+.push-task-row--flash-white {
+  background: #fff;
+}
+
+.push-task-row--flash-yellow .push-task-row__info span,
+.push-task-row--flash-white .push-task-row__info span {
+  color: #333;
 }

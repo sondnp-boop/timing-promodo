@@ -50,11 +50,31 @@ describe('PomodoroPanel', () => {
     await waitFor(() => expect(api.startPomodoro).toHaveBeenCalledWith('work'));
   });
 
-  it('bấm "Bắt đầu làm việc" không tự mở nhạc', async () => {
+  it('bấm Start không tự mở nhạc', async () => {
     await renderOpenPanel();
-    fireEvent.click(screen.getByText('Bắt đầu làm việc'));
+    fireEvent.click(screen.getByText('Start'));
     await waitFor(() => expect(api.startPomodoro).toHaveBeenCalledWith('work'));
     expect(api.playMusic).not.toHaveBeenCalled();
+  });
+
+  it('nút Start đổi thành Stop khi đang chạy; bấm Stop gọi stopPomodoro', async () => {
+    await renderOpenPanel();
+    fireEvent.click(screen.getByText('Start'));
+    const stop = await screen.findByText('Stop');
+    expect(screen.queryByText('Start')).not.toBeInTheDocument();
+    fireEvent.click(stop);
+    await waitFor(() => expect(api.stopPomodoro).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText('Start')).toBeInTheDocument();
+  });
+
+  it('nút Start/Stop đứng đầu dòng điều khiển, trước ô giờ, URL, Play', async () => {
+    await renderOpenPanel();
+    const row = document.querySelector('.pomodoro-controls')!;
+    const toggle = screen.getByText('Start');
+    expect(row).toContainElement(toggle);
+    expect(toggle.compareDocumentPosition(screen.getByLabelText('Thời gian làm/nghỉ (phút)'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
   });
 
   it('chỉ bấm Play mới gọi playMusic', async () => {

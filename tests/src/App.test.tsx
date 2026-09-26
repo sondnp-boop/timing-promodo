@@ -23,6 +23,7 @@ function stubElectronAPI() {
     markTaskDone: vi.fn(),
     deleteTask: vi.fn(),
     onTasksUpdated: vi.fn().mockReturnValue(() => {}),
+    onTasksPushed: vi.fn().mockReturnValue(() => {}),
   };
 }
 

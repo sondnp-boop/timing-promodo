@@ -1,52 +1,38 @@
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { PomodoroClock } from '../../src/features/pomodoro/PomodoroClock';
 
 describe('PomodoroClock', () => {
-  it('hiện trạng thái "Chưa chạy" khi state null', () => {
-    render(<PomodoroClock state={null} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+  it('hiện trạng thái "Chưa chạy" khi state null và không còn nút bên trong', () => {
+    render(<PomodoroClock state={null} now={0} />);
     expect(screen.getByText('Chưa chạy')).toBeInTheDocument();
-  });
-
-  it('gọi onStart("work") khi bấm Bắt đầu làm việc', () => {
-    const onStart = vi.fn();
-    render(<PomodoroClock state={null} now={0} onStart={onStart} onStop={vi.fn()} />);
-    fireEvent.click(screen.getByText('Bắt đầu làm việc'));
-    expect(onStart).toHaveBeenCalledWith('work');
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('hiện đúng pha và thời gian còn lại khi đang chạy', () => {
     const state = { phase: 'work' as const, phaseEndsAt: 90_000, running: true };
-    render(<PomodoroClock state={state} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+    render(<PomodoroClock state={state} now={0} />);
     expect(screen.getByText('Đang làm việc')).toBeInTheDocument();
     expect(screen.getByText('01:30')).toBeInTheDocument();
   });
 
   it('hiện "Đang nghỉ" đúng khi phase = break', () => {
     const state = { phase: 'break' as const, phaseEndsAt: 60_000, running: true };
-    render(<PomodoroClock state={state} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+    render(<PomodoroClock state={state} now={0} />);
     expect(screen.getByText('Đang nghỉ')).toBeInTheDocument();
   });
 
   it('áp modifier màu theo pha: work / break / chưa chạy', () => {
     const work = { phase: 'work' as const, phaseEndsAt: 90_000, running: true };
-    const { container, rerender } = render(<PomodoroClock state={work} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+    const { container, rerender } = render(<PomodoroClock state={work} now={0} />);
     const display = () => container.querySelector('.pomodoro-clock__display')!;
     expect(display()).toHaveClass('pomodoro-clock__display--work');
 
-    rerender(<PomodoroClock state={{ ...work, phase: 'break' }} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+    rerender(<PomodoroClock state={{ ...work, phase: 'break' }} now={0} />);
     expect(display()).toHaveClass('pomodoro-clock__display--break');
     expect(display()).not.toHaveClass('pomodoro-clock__display--work');
 
-    rerender(<PomodoroClock state={null} now={0} onStart={vi.fn()} onStop={vi.fn()} />);
+    rerender(<PomodoroClock state={null} now={0} />);
     expect(display().className).not.toMatch(/--(work|break)/);
-  });
-
-  it('gọi onStop khi bấm Dừng', () => {
-    const onStop = vi.fn();
-    const state = { phase: 'work' as const, phaseEndsAt: 90_000, running: true };
-    render(<PomodoroClock state={state} now={0} onStart={vi.fn()} onStop={onStop} />);
-    fireEvent.click(screen.getByText('Dừng'));
-    expect(onStop).toHaveBeenCalled();
   });
 });
