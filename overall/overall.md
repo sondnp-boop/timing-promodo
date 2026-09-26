@@ -22,6 +22,7 @@ npm install
 npm run build        # tsc (renderer) + tsc (electron, CommonJS) + vite build  → dist/, dist-electron/
 npm run electron:dev # build rồi chạy Electron thật (cách duy nhất để xem app thật)
 npm test             # vitest run (toàn bộ test)
+npm run dist         # build + electron-builder --win → release/ (bộ cài NSIS + bản portable), xem mục 13
 ```
 
 - `package.json` **không** có `"type": "module"` (main process biên dịch ra CommonJS; thêm vào sẽ lỗi `exports is not defined`).
@@ -150,7 +151,7 @@ Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.t
 ## 9. Test
 
 - Vitest, môi trường jsdom, globals bật, setup `tests/setupTests.ts`. Chạy 1 file: `npx vitest run tests/src/PushTaskRow.test.tsx`.
-- Hiện ~166 test, 22 file. Component test stub `window.electronAPI = {...}` (chỉ cần khai báo hàm được gọi).
+- Hiện ~173 test, 23 file. Component test stub `window.electronAPI = {...}` (chỉ cần khai báo hàm được gọi).
 - jsdom **không có layout/CSS file** → quy tắc CSS quan trọng (sticky, tỉ lệ cột 2/2/6/2, có class màu nhấp nháy) được kiểm bằng cách đọc thẳng text `src/App.css` (`tests/src/appCss.test.ts`). Sửa các rule này thì sửa test tương ứng.
 - Mock `scrollHeight` bằng `Object.defineProperty` trên `HTMLTextAreaElement.prototype` (không dùng `vi.spyOn` getter — gây đệ quy vô hạn), nhớ `delete` sau test.
 - Test theo thời gian: truyền `now` cố định vào component/hàm thuần thay vì fake timers. Test tích hợp Panel dùng `Date.now()` thật, chỉ assert regex lớp `flash-(red|green)` vì màu phụ thuộc giây chẵn/lẻ.
@@ -176,13 +177,24 @@ Thêm kênh mới = sửa 3 nơi: `ipc.ts`, `preload.ts`, `src/api/electronApi.t
 8. `feature_overall_doc` – file này.
 9. `feature_done_bottom_clear_form` – task Done xuống cuối danh sách; form thêm/sửa xóa trắng cả 2 ô sau Enter (và trống khi mở app).
 10. `feature_reset_button` – nút Reset đặt lại giờ khởi tạo toàn bộ đầu việc (có xác nhận).
+11. `feature_packaging` – cấu hình electron-builder (`npm run dist`), test cấu hình đóng gói.
 
 (Các branch chưa được merge vào một nhánh chính; mỗi branch tách từ branch trước.)
 
 ## 12. Việc còn dang dở / ý tưởng
 
 - Thiếu `assets/tray-icon.png` (tray không hiện).
-- Chưa có đóng gói installer (`electron-builder` đã có trong devDependencies nhưng chưa cấu hình).
 - Playlist mặc định trong `schema.ts` là URL mẫu, chưa xác nhận còn hoạt động.
 - Người dùng từng hỏi về thông báo **to hơn** (phát file chuông riêng, `toastXml` với âm `Notification.Looping.Alarm`, nháy taskbar `flashFrame`) → chưa làm, đang chờ người dùng chọn cách.
 - Trạng thái Pomodoro chưa lưu qua lần khởi động lại.
+
+## 13. Đóng gói & phát hành (Windows)
+
+- Lệnh: `npm run dist` → thư mục `release/` (đã trong `.gitignore`, **không commit .exe**): `Pomodoro Push Widget Setup <ver>.exe` (NSIS, cho chọn thư mục cài), `Pomodoro Push Widget <ver>.exe` (portable), `win-unpacked/` (chạy thử nhanh không cần cài).
+- Cấu hình nằm ở khóa `"build"` trong `package.json` (không phải file riêng). `directories.output` **phải là `release`** — mặc định của electron-builder là `dist` sẽ đè bản build Vite.
+- `win.signAndEditExecutable: false`: tránh lỗi "Cannot create symbolic link" khi giải nén `winCodeSign` trên Windows không bật Developer Mode/không chạy Admin. Hệ quả: exe không được ký và không nhúng metadata/icon tùy biến. Muốn icon riêng: bật Developer Mode (hoặc chạy Admin), bỏ tùy chọn này, thêm `build/icon.ico` và `win.icon`.
+- Bản đóng gói **dùng chung thư mục dữ liệu với bản dev** (`%APPDATA%\timing-promodo`, tên lấy từ `package.json > name`), nên task/cài đặt có sẵn. Chuyển sang máy khác: chép `app-data.json` (khi app tắt).
+- Gói chỉ chứa `dist/`, `dist-electron/`, `package.json` (react đã được Vite bundle vào `dist/`). `main.ts` nạp `../dist/index.html` nên hai thư mục phải giữ nguyên vị trí tương đối. Nếu thêm asset (vd `assets/tray-icon.png`) phải thêm vào `build.files`.
+- Chưa ký số → máy khác sẽ thấy cảnh báo SmartScreen ("More info" → "Run anyway"). Chưa có tự cập nhật, chưa có tự khởi động cùng Windows.
+- Đưa bản cài lên GitHub Releases: `gh release create vX.Y.Z "release/Pomodoro Push Widget Setup X.Y.Z.exe" --title ... --notes ...`.
+- Smoke test đã làm: chạy `win-unpacked/Pomodoro Push Widget.exe` ~8 giây → cửa sổ có tiêu đề đúng, 4 tiến trình Electron, đóng sạch. Lưu ý: chạy bản đóng gói sẽ đọc/ghi lại file dữ liệu thật của người dùng.

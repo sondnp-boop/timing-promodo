@@ -8,7 +8,31 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && tsc -p electron/tsconfig.json && vite build",
     "electron:dev": "npm run build && electron .",
+    "dist": "npm run build && electron-builder --win",
     "test": "vitest run"
+  },
+  "build": {
+    "appId": "com.sondnp.timingpromodo",
+    "productName": "Pomodoro Push Widget",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.0",
