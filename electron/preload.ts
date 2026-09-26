@@ -4,6 +4,7 @@ import { PomodoroState } from './modules/pomodoro/pomodoroEngine';
 
 const electronAPI = {
   getData: (): Promise<AppData> => ipcRenderer.invoke('data:get'),
+  copyToClipboard: (text: string): Promise<void> => ipcRenderer.invoke('clipboard:write', text),
   minimizeWindow: (): Promise<void> => ipcRenderer.invoke('window:minimize'),
 
   updatePomodoroSettings: (settings: PomodoroSettings): Promise<PomodoroSettings> =>

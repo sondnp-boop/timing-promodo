@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CollapsiblePanel } from '../../src/shared/CollapsiblePanel';
 
@@ -40,6 +40,23 @@ describe('CollapsiblePanel', () => {
       </CollapsiblePanel>
     );
     expect(screen.getByTestId('panel-badge')).toHaveTextContent('0');
+  });
+
+  it('headerExtra hiện cạnh tiêu đề; bấm vào nó không đóng/mở panel (kể cả phím Enter)', () => {
+    const onExtra = vi.fn();
+    render(
+      <CollapsiblePanel
+        title="P"
+        defaultExpanded={true}
+        headerExtra={<button onClick={onExtra}>Extra</button>}
+      >
+        <div>Nội dung</div>
+      </CollapsiblePanel>
+    );
+    fireEvent.click(screen.getByText('Extra'));
+    fireEvent.keyDown(screen.getByText('Extra'), { key: 'Enter' });
+    expect(onExtra).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Nội dung')).toBeInTheDocument();
   });
 
   it('click vào header toggle đúng trạng thái', () => {

@@ -429,3 +429,103 @@ textarea:focus {
 .push-task-row--flash-red .push-task-row__label {
   color: #fff;
 }
+
+.collapsible-panel__extra {
+  margin-left: 8px;
+}
+
+.panel-export-btn {
+  padding: 1px 10px;
+  font-size: 11px;
+  color: var(--cyan);
+  background: transparent;
+  border: 1px solid var(--cyan);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.panel-export-btn:hover {
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(3, 6, 14, 0.75);
+}
+
+.modal {
+  width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: #0d1428;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.25);
+}
+
+.modal__title {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.modal__message {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modal__btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid rgba(127, 143, 181, 0.6);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal__btn--primary {
+  color: var(--cyan);
+  border-color: var(--cyan);
+}
+
+.modal__btn--danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.modal__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.export-text {
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  max-height: 300px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  font-size: 13px;
+  background: rgba(5, 8, 20, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 8px;
+}

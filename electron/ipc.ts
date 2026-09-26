@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, shell } from 'electron';
+import { BrowserWindow, clipboard, ipcMain, shell } from 'electron';
 import { JsonStore } from './store/jsonStore';
 import { AppData, PomodoroSettings, PushTask } from './store/schema';
 import { PomodoroState, WARNING_SECONDS, dueWarning, startPhase, tick } from './modules/pomodoro/pomodoroEngine';
@@ -71,6 +71,10 @@ export function registerIpcHandlers(store: JsonStore, getWindow: () => BrowserWi
   }, TICK_INTERVAL_MS);
 
   ipcMain.handle('data:get', () => data);
+
+  ipcMain.handle('clipboard:write', (_e, text: string) => {
+    clipboard.writeText(String(text));
+  });
 
   ipcMain.handle('window:minimize', () => {
     getWindow()?.minimize();

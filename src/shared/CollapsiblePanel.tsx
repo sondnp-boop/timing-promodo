@@ -3,11 +3,12 @@ import { useState, ReactNode } from 'react';
 interface CollapsiblePanelProps {
   title: string;
   badge?: number;
+  headerExtra?: ReactNode;
   defaultExpanded: boolean;
   children: ReactNode;
 }
 
-export function CollapsiblePanel({ title, badge, defaultExpanded, children }: CollapsiblePanelProps) {
+export function CollapsiblePanel({ title, badge, headerExtra, defaultExpanded, children }: CollapsiblePanelProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
@@ -28,6 +29,15 @@ export function CollapsiblePanel({ title, badge, defaultExpanded, children }: Co
           {badge !== undefined && (
             <span className="collapsible-panel__badge" data-testid="panel-badge">
               {badge}
+            </span>
+          )}
+          {headerExtra && (
+            <span
+              className="collapsible-panel__extra"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              {headerExtra}
             </span>
           )}
         </span>

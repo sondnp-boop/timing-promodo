@@ -89,7 +89,29 @@ describe('PushTaskRow', () => {
     const ticks = screen.getAllByTestId('tick-t1');
     expect(ticks).toHaveLength(4);
     expect(ticks.map((t) => Math.round(left(t)))).toEqual([0, 33, 67, 100]);
-    ['0', '1', '2', '3'].forEach((label) => expect(screen.getByText(label)).toBeInTheDocument());
+    ['0', '1 tiếng', '2 tiếng', '3 tiếng'].forEach((label) => expect(screen.getByText(label)).toBeInTheDocument());
+  });
+
+  it('nhãn mốc: < 1 giờ hiển thị phút, >= 1 giờ hiển thị tiếng', () => {
+    renderAt(makeTask({ offsetsHours: [1 / 6, 0.5, 2, 2.5] }), 0);
+    ['0', '10 phút', '30 phút', '2 tiếng', '2.5 tiếng'].forEach((label) =>
+      expect(screen.getByText(label)).toBeInTheDocument()
+    );
+  });
+
+  it('tooltip của chấm đỏ hiển thị thời gian đã trôi qua (phút nếu < 1 tiếng, tiếng nếu >= 1 tiếng)', () => {
+    const task = makeTask({ offsetsHours: [1, 2, 3] });
+    const cases: [number, string][] = [
+      [0, 'Đã trôi qua 0 phút'],
+      [0.5 * HOUR, 'Đã trôi qua 30 phút'],
+      [1 * HOUR, 'Đã trôi qua 1 tiếng'],
+      [2.5 * HOUR, 'Đã trôi qua 2.5 tiếng'],
+    ];
+    for (const [now, title] of cases) {
+      const { unmount } = renderAt(task, now);
+      expect(screen.getByTestId('dot-t1')).toHaveAttribute('title', title);
+      unmount();
+    }
   });
 
   it('chấm đỏ ở chính giữa đoạn 0-1 khi đã trôi 30 phút (setup 1,2,3)', () => {

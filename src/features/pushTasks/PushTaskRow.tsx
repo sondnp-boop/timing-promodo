@@ -2,6 +2,7 @@ import { PushTask } from '../../shared/types';
 import { colorForIndex } from '../../shared/colorPalette';
 import { CheckIcon, EditIcon, TrashIcon } from '../../shared/icons';
 import { rowAlert } from '../../shared/flash';
+import { formatDurationHours } from '../../shared/formatDuration';
 
 interface PushTaskRowProps {
   task: PushTask;
@@ -76,13 +77,14 @@ export function PushTaskRow({ task, now, onToggleDone, onDelete, onEditOffsets }
           <span
             className="push-task-row__dot"
             data-testid={`dot-${task.id}`}
+            title={`Đã trôi qua ${formatDurationHours(elapsedHours)}`}
             style={{ left: `${dotPercent}%` }}
           />
         </div>
         <div className="push-task-row__labels">
           {points.map((hours) => (
             <span key={`label-${hours}`} className="push-task-row__label" style={{ left: `${percentOf(hours)}%` }}>
-              {hours}
+              {hours === 0 ? '0' : formatDurationHours(hours)}
             </span>
           ))}
         </div>

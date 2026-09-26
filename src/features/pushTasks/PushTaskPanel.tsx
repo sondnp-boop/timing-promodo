@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { CollapsiblePanel } from '../../shared/CollapsiblePanel';
 import { PushTaskList } from './PushTaskList';
 import { PushTaskForm, NewTaskInput } from './PushTaskForm';
+import { ExportDialog } from './ExportDialog';
+import { ConfirmDialog } from '../../shared/Modal';
 import { getElectronApi } from '../../api/electronApi';
 import { PushTask } from '../../shared/types';
 
@@ -13,6 +15,8 @@ export function PushTaskPanel() {
   const [tasks, setTasks] = useState<PushTask[]>([]);
   const [now, setNow] = useState(Date.now());
   const [editing, setEditing] = useState<EditingTask | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PushTask | null>(null);
+  const [showExport, setShowExport] = useState(false);
 
   useEffect(() => {
     const api = getElectronApi();
@@ -51,12 +55,23 @@ export function PushTaskPanel() {
     setTasks(await api.markTaskDone(id));
   }
 
-  async function handleDelete(id: string) {
-    const api = getElectronApi();
-    if (editing?.id === id) {
+  function handleDelete(id: string) {
+    const task = tasks.find((t) => t.id === id);
+    if (task) {
+      setPendingDelete(task);
+    }
+  }
+
+  async function confirmDelete() {
+    const task = pendingDelete;
+    setPendingDelete(null);
+    if (!task) {
+      return;
+    }
+    if (editing?.id === task.id) {
       setEditing(null);
     }
-    setTasks(await api.deleteTask(id));
+    setTasks(await getElectronApi().deleteTask(task.id));
   }
 
   function handleEdit(id: string) {
@@ -67,19 +82,35 @@ export function PushTaskPanel() {
   }
 
   return (
-    <CollapsiblePanel
-      title="Đầu việc cần push"
-      badge={tasks.filter((t) => !t.done).length}
-      defaultExpanded={true}
-    >
-      <PushTaskForm onSubmit={handleSubmit} editing={editing} onCancelEdit={() => setEditing(null)} />
-      <PushTaskList
-        tasks={tasks}
-        now={now}
-        onToggleDone={handleToggleDone}
-        onDelete={handleDelete}
-        onEditOffsets={handleEdit}
-      />
-    </CollapsiblePanel>
+    <>
+      <CollapsiblePanel
+        title="Đầu việc cần push"
+        badge={tasks.filter((t) => !t.done).length}
+        headerExtra={
+          <button type="button" className="panel-export-btn" onClick={() => setShowExport(true)}>
+            Export
+          </button>
+        }
+        defaultExpanded={true}
+      >
+        <PushTaskForm onSubmit={handleSubmit} editing={editing} onCancelEdit={() => setEditing(null)} />
+        <PushTaskList
+          tasks={tasks}
+          now={now}
+          onToggleDone={handleToggleDone}
+          onDelete={handleDelete}
+          onEditOffsets={handleEdit}
+        />
+      </CollapsiblePanel>
+      {pendingDelete && (
+        <ConfirmDialog
+          message={`Xóa đầu việc "${pendingDelete.name.replace(/\s+/g, ' ').trim()}"?`}
+          confirmLabel="Xóa"
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
+      {showExport && <ExportDialog tasks={tasks} now={now} onClose={() => setShowExport(false)} />}
+    </>
   );
 }

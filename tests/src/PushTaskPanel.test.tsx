@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { PushTaskPanel } from '../../src/features/pushTasks/PushTaskPanel';
 import { PushTask } from '../../src/shared/types';
 
@@ -26,6 +26,7 @@ async function renderPanel(tasks: PushTask[]) {
     updateTask: vi.fn().mockResolvedValue(tasks),
     markTaskDone: vi.fn().mockResolvedValue(tasks),
     deleteTask: vi.fn().mockResolvedValue([]),
+    copyToClipboard: vi.fn().mockResolvedValue(undefined),
   };
   (window as any).electronAPI = api;
   render(<PushTaskPanel />);
@@ -102,10 +103,62 @@ describe('PushTaskPanel', () => {
     expect(api.updateTask).not.toHaveBeenCalled();
   });
 
-  it('xóa task đang sửa thì thoát chế độ sửa', async () => {
+  it('xóa task đang sửa thì thoát chế độ sửa (sau khi xác nhận)', async () => {
     await renderPanel([makeTask('1')]);
     fireEvent.click(screen.getByLabelText('Sửa giờ push'));
     fireEvent.click(screen.getByLabelText('Xóa đầu việc'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByText('Xóa'));
     await waitFor(() => expect(screen.queryByText('Sửa')).not.toBeInTheDocument());
+  });
+
+  it('bấm xóa hiện hộp xác nhận, chưa xóa ngay; Hủy thì không xóa', async () => {
+    await renderPanel([makeTask('1')]);
+    fireEvent.click(screen.getByLabelText('Xóa đầu việc'));
+    const dialog = screen.getByRole('dialog', { name: 'Xác nhận' });
+    expect(within(dialog).getByText('Xóa đầu việc "Task 1"?')).toBeInTheDocument();
+    expect(api.deleteTask).not.toHaveBeenCalled();
+
+    fireEvent.click(within(dialog).getByText('Hủy'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(api.deleteTask).not.toHaveBeenCalled();
+    expect(screen.getByTestId('push-task-row-1')).toBeInTheDocument();
+  });
+
+  it('đồng ý xác nhận mới gọi deleteTask', async () => {
+    await renderPanel([makeTask('1')]);
+    fireEvent.click(screen.getByLabelText('Xóa đầu việc'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByText('Xóa'));
+    await waitFor(() => expect(api.deleteTask).toHaveBeenCalledWith('1'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByTestId('push-task-row-1')).not.toBeInTheDocument());
+  });
+
+  it('nút Export cạnh badge mở popup danh sách (done trước) và không đóng panel', async () => {
+    const tasks = [makeTask('1'), makeTask('2', { done: true })];
+    await renderPanel(tasks);
+    fireEvent.click(screen.getByText('Export'));
+    const dialog = screen.getByRole('dialog', { name: 'Export' });
+    const text = within(dialog).getByTestId('export-text').textContent!;
+    expect(text.split('\n')[0]).toBe('1. Task 2. Done');
+    expect(text.split('\n')[1]).toMatch(/^2\. Task 1\. Progress\. [\d.]+ (phút|tiếng) \/ 3,6,9$/);
+    expect(screen.getByTestId('push-task-row-1')).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByText('Copy to Clipboard'));
+    await waitFor(() => expect(api.copyToClipboard).toHaveBeenCalledWith(text));
+  });
+
+  it('công việc đã xóa không còn trong Export', async () => {
+    const remaining = makeTask('2');
+    await renderPanel([makeTask('1'), remaining]);
+    api.deleteTask.mockResolvedValue([remaining]);
+
+    fireEvent.click(within(screen.getByTestId('push-task-row-1')).getByLabelText('Xóa đầu việc'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByText('Xóa'));
+    await waitFor(() => expect(screen.queryByTestId('push-task-row-1')).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Export'));
+    const text = within(screen.getByRole('dialog')).getByTestId('export-text').textContent!;
+    expect(text).toMatch(/^1\. Task 2\. Progress\./);
+    expect(text).not.toContain('Task 1');
   });
 });
